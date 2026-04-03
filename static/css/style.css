@@ -1,0 +1,106 @@
+/* Technical Editorial Variable System */
+:root {
+    --bg-foundation: #FBF9FA;
+    --deep-onyx: #041627;
+    --soft-slate: #64748B;
+    --steel-stroke: #E4E2E3;
+    --success-mint: #4FFEB1;
+    --font-main: 'Manrope', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-foundation);
+    color: var(--deep-onyx);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* Typography */
+h1, h2, h3, .navbar-brand {
+    font-family: var(--font-main);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    max-width: 800px;
+    margin: 0 auto 1.5rem;
+}
+
+/* Layout Components */
+.navbar {
+    border-bottom: 1.5px solid var(--steel-stroke);
+    padding: 1rem 0;
+}
+
+.hero-section {
+    padding: 80px 0;
+}
+
+.bento-card {
+    background: #ffffff;
+    border: 1.5px solid var(--steel-stroke);
+    border-radius: 8px;
+    padding: 2.5rem;
+}
+
+.input-pane {
+    border-right: 1.5px solid var(--steel-stroke);
+}
+
+/* Forms & UI Elements */
+.label-technical {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--soft-slate);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control {
+    border: 1px solid var(--steel-stroke);
+    background-color: var(--bg-foundation);
+    font-size: 0.9rem;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: var(--deep-onyx);
+    background-color: #fff;
+}
+
+.btn-primary-onyx {
+    background-color: var(--deep-onyx);
+    color: white;
+    font-weight: 700;
+    border-radius: 4px;
+}
+
+/* Utility */
+#loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(251, 249, 250, 0.9);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 992px) {
+    .input-pane {
+        border-right: none;
+        border-bottom: 1.5px solid var(--steel-stroke);
+        padding-bottom: 2rem;
+        margin-bottom: 2rem;
+    }
+    .hero-title {
+        font-size: 2.2rem;
+    }
+}
