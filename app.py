@@ -1,13 +1,25 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, render_template, session
 import os
 from dotenv import load_dotenv
 from google import genai
+import psycopg2
+import json
+import uuid
 
 load_dotenv()
 
 app = Flask(__name__)
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+app.secret_key = os.getenv("SECRET_KEY")
+
+@app.before_request
+def set_session():
+    if "user_id" not in session:
+        session["user_id"] = str(uuid.uuid4())
+
+def get_db_connection():
+    return psycopg2.connect(os.getenv("DATABASE_URL"))
 
 @app.route("/", methods=["GET"])
 def home():
@@ -38,6 +50,33 @@ def generate():
         model="gemini-2.5-flash",
         contents=prompt
     )
+    session_id = session.get("user_id")
+
+    input_data = {
+        "skills": skills,
+        "projects": projects,
+        "experience": experience,
+        "job_description": job_description
+    }
+
+    output_data = {
+        "result": response.text
+    }
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT INTO resumes (session_id, input_data, output_data)
+        VALUES (%s, %s, %s)
+        """,
+        (session_id, json.dumps(input_data), json.dumps(output_data))
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     return render_template("index.html", result=response.text)
 
