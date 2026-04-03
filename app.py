@@ -19,7 +19,13 @@ def set_session():
         session["user_id"] = str(uuid.uuid4())
 
 def get_db_connection():
-    return psycopg2.connect(os.getenv("DATABASE_URL"))
+    url = os.getenv("DATABASE_URL")
+
+    # Fix for Render postgres URL issue
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgres://", 1)
+
+    return psycopg2.connect(url)
 
 @app.route("/", methods=["GET"])
 def home():
