@@ -1,92 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resumely | AI Resume Optimizer</title>
-    
-    <meta name="description" content="Optimize your professional trajectory with Resumely.">
-    <meta property="og:title" content="Resumely AI Resume Optimizer">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">   
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumely — AI Resume Optimizer</title>
+<meta name="description" content="Optimize your resume with AI. ATS score, gap analysis, PDF and LaTeX export.">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-steps">
+    <div class="loading-step active" id="lstep1"><div class="step-dot"></div>Parsing resume structure...</div>
+    <div class="loading-step" id="lstep2"><div class="step-dot"></div>Analyzing job description...</div>
+    <div class="loading-step" id="lstep3"><div class="step-dot"></div>Calculating ATS score...</div>
+    <div class="loading-step" id="lstep4"><div class="step-dot"></div>Tailoring bullet points...</div>
+    <div class="loading-step" id="lstep5"><div class="step-dot"></div>Generating PDF &amp; LaTeX...</div>
+  </div>
+</div>
+
+<nav class="site-nav">
+  <span class="nav-logo">Resumely</span>
+  <span class="nav-tag">AI-Powered · ATS-Safe</span>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">Beat the Algorithm</div>
+  <h1>Your resume,<br><em>optimized</em> for any job.</h1>
+  <p class="hero-sub">AI parses your resume, scores it against the JD, rewrites weak bullets, and exports a ready-to-send PDF.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">ATS</div><div class="stat-label">Score 0–100</div></div>
+    <div class="stat"><div class="stat-num">PDF</div><div class="stat-label">Clean Export</div></div>
+    <div class="stat"><div class="stat-num">TeX</div><div class="stat-label">LaTeX / Overleaf</div></div>
+  </div>
+</section>
+
+<div class="main-wrapper">
+
+  <div id="uploadAlert" class="alert alert-error"></div>
+
+  <div class="input-tabs">
+    <button class="tab-btn active" onclick="switchTab('text',this)">Paste Text</button>
+    <button class="tab-btn" onclick="switchTab('pdf',this)">Upload PDF</button>
+  </div>
+
+  <div class="form-card">
+    <form action="/generate" method="POST" id="mainForm">
+
+      <div id="pdfPanel" style="display:none;margin-bottom:24px;">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfInput').click()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-label"><strong>Click to upload</strong> or drag &amp; drop your resume PDF</div>
+          <p style="font-size:11px;color:var(--muted);margin-top:6px;">Max 5MB · PDF only · text extracted into fields below</p>
+          <input type="file" id="pdfInput" accept=".pdf" onchange="handlePdfUpload(this)" style="display:none;">
+          <div class="upload-filename" id="uploadFilename"></div>
         </div>
+      </div>
+
+      <div class="form-grid">
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <div class="field-group">
+            <label class="field-label" for="skills">
+              Skills <span class="char-count" id="skillsCount">0 / 3000</span>
+            </label>
+            <textarea id="skills" name="skills"
+              placeholder="Python, Flask, PostgreSQL, REST APIs, Docker, Git, React..."
+              required oninput="updateCount(this,'skillsCount',3000)"></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="projects">
+              Projects <span class="char-count" id="projectsCount">0 / 5000</span>
+            </label>
+            <textarea id="projects" name="projects"
+              placeholder="Project name, tech stack, what you built, outcomes..."
+              required oninput="updateCount(this,'projectsCount',5000)"></textarea>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="experience">
+              Experience <span class="char-count" id="expCount">0 / 5000</span>
+            </label>
+            <textarea id="experience" name="experience"
+              placeholder="Job title, company, dates, key responsibilities..."
+              required oninput="updateCount(this,'expCount',5000)"></textarea>
+          </div>
+
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="job_description">
+            Job Description <span class="char-count" id="jdCount">0 / 5000</span>
+          </label>
+          <textarea id="job_description" name="job_description"
+            placeholder="Paste the full job description here. The more detail, the better the ATS match."
+            required oninput="updateCount(this,'jdCount',5000)"
+            style="height:340px;min-height:200px;"></textarea>
+
+          <div style="margin-top:16px;">
+            <button type="submit" class="btn-generate" id="submitBtn">
+              Analyze &amp; Optimize Resume
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <div class="how-section">
+    <h2 class="section-title">How it works</h2>
+    <div class="steps-grid">
+      <div class="step-card"><div class="step-num">01</div><div class="step-title">Parse Resume</div><div class="step-desc">AI extracts name, skills, experience and projects into structured data.</div></div>
+      <div class="step-card"><div class="step-num">02</div><div class="step-title">Analyze JD</div><div class="step-desc">Required skills, tools and keywords extracted from the job description.</div></div>
+      <div class="step-card"><div class="step-num">03</div><div class="step-title">ATS Score</div><div class="step-desc">Keyword coverage, skill overlap and experience relevance scored 0–100.</div></div>
+      <div class="step-card"><div class="step-num">04</div><div class="step-title">Tailor Content</div><div class="step-desc">Bullets rewritten with JD keywords. No fake metrics, no hallucinations.</div></div>
+      <div class="step-card"><div class="step-num">05</div><div class="step-title">Export</div><div class="step-desc">Download polished resume as PDF or LaTeX for Overleaf.</div></div>
     </div>
+  </div>
 
-    <nav class="navbar navbar-expand-lg sticky-top bg-white">
-        <div class="container">
-            <a class="navbar-brand" href="/">RESUMELY</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#">HOME</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#editor">EDITOR</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+</div>
 
-    <header class="hero-section text-center">
-        <div class="container">
-            <h1 class="hero-title">Tailor Your Resume for Every Job Using AI</h1>
-            <p class="text-secondary mb-5 fs-5">A technical architect for your career trajectory.</p>
-            <a href="#editor" class="btn btn-primary-onyx btn-lg">GET STARTED</a>
-        </div>
-    </header>
+<footer>
+  <span class="footer-logo">RESUMELY</span>
+  <span class="footer-note">No data sold. No tracking. Your resume stays yours.</span>
+</footer>
 
-    <main class="container mb-5" id="editor">
-        <div class="bento-card shadow-sm">
-            <form action="/generate" method="POST" id="resumeForm">
-                <div class="row g-4">
-                    <div class="col-lg-6 input-pane pe-lg-5">
-                        <h2 class="h4 mb-4">Core Attributes</h2>
-                        <div class="mb-4">
-                            <label class="label-technical">Technical Skills</label>
-                            <textarea name="skills" class="form-control" rows="3" required></textarea>
-                        </div>
-                        <div class="mb-4">
-                            <label class="label-technical">Key Projects</label>
-                            <textarea name="projects" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <div class="mb-4">
-                            <label class="label-technical">Experience</label>
-                            <textarea name="experience" class="form-control" rows="6" required></textarea>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-6 ps-lg-5">
-                        <h2 class="h4 mb-4">Target Parameters</h2>
-                        <div class="mb-4">
-                            <label class="label-technical">Job Description</label>
-                            <textarea name="job_description" class="form-control" style="height: 400px;" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary-onyx w-100 py-3">ANALYSE STRUCTURE</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.getElementById('resumeForm').addEventListener('submit', function() {
-            document.getElementById('loading-overlay').style.display = 'flex';
-        });
-    </script>
-
-    {% if result %}
-        <h3>Result</h3>
-        <pre>{{ result }}</pre>
-    {% endif %}
+<script>
+function switchTab(mode,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('pdfPanel').style.display=mode==='pdf'?'block':'none';}
+function updateCount(el,cid,max){const n=el.value.length;const c=document.getElementById(cid);c.textContent=n+' / '+max;c.className='char-count'+(n>max*.9?' char-warn':'');}
+async function handlePdfUpload(input){const file=input.files[0];if(!file)return;const fn=document.getElementById('uploadFilename');fn.style.display='block';fn.textContent='📎 '+file.name+' — extracting...';const fd=new FormData();fd.append('resume_pdf',file);try{const r=await fetch('/parse-pdf',{method:'POST',body:fd});const d=await r.json();if(d.text){document.getElementById('experience').value=d.text.substring(0,4800);updateCount(document.getElementById('experience'),'expCount',5000);fn.textContent='✅ Extracted — review & add Skills / Projects above';switchTab('text',document.querySelectorAll('.tab-btn')[0]);}else{showAlert(d.error||'Could not parse PDF.');fn.style.display='none';}}catch(e){showAlert('Upload failed. Paste resume as text.');fn.style.display='none';}}
+const zone=document.getElementById('uploadZone');if(zone){zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragging');});zone.addEventListener('dragleave',()=>zone.classList.remove('dragging'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('dragging');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf'){document.getElementById('pdfInput').files=e.dataTransfer.files;handlePdfUpload(document.getElementById('pdfInput'));}});}
+function showAlert(msg){const el=document.getElementById('uploadAlert');el.textContent=msg;el.classList.add('active');setTimeout(()=>el.classList.remove('active'),6000);}
+function startLoading(){const ids=['lstep1','lstep2','lstep3','lstep4','lstep5'];const delays=[0,4000,8000,12000,16000];ids.forEach((id,i)=>{setTimeout(()=>{if(i>0)document.getElementById(ids[i-1]).className='loading-step done';document.getElementById(id).className='loading-step active';},delays[i]);});}
+document.getElementById('mainForm').addEventListener('submit',function(){document.getElementById('loadingOverlay').classList.add('active');document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='Analyzing...';startLoading();});
+</script>
 </body>
 </html>

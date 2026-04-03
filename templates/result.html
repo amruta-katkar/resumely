@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Results — Resumely</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="/" class="nav-logo">Resumely</a>
+  <div class="nav-actions">
+    <a href="/export/pdf/{{ result_id }}" class="btn btn-primary">⬇ Download PDF</a>
+    <a href="/export/latex/{{ result_id }}" class="btn btn-latex">⬇ LaTeX (.tex)</a>
+    <a href="/" class="btn btn-ghost">New Analysis</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="result-header">
+    <h1>Analysis Complete</h1>
+    <p class="subtitle">Your optimized resume is ready. Review each section below.</p>
+  </div>
+
+  <!-- ── ATS SCORE ─────────────────────────────────────── -->
+  {% set ats = result.get('ats_report', {}) %}
+  {% set score = ats.get('total_score', 0) %}
+  {% set bd    = ats.get('breakdown', {}) %}
+  {% set jd    = result.get('parsed_jd', {}) %}
+
+  {% if score >= 75 %}
+    {% set ring_color = '#c8f135' %}{% set badge_class = 'tag-green' %}{% set badge_label = 'Strong Match' %}
+  {% elif score >= 50 %}
+    {% set ring_color = '#f5c842' %}{% set badge_class = 'tag-yellow' %}{% set badge_label = 'Moderate Match' %}
+  {% else %}
+    {% set ring_color = '#ff5f5f' %}{% set badge_class = 'tag-red' %}{% set badge_label = 'Needs Work' %}
+  {% endif %}
+
+  {% set circumference = 364.4 %}
+  {% set dash_offset = circumference - (circumference * score / 100) %}
+
+  <div class="ats-card">
+    <div class="score-ring-wrap">
+      <div class="score-ring">
+        <svg viewBox="0 0 140 140" width="140" height="140">
+          <circle class="score-ring-bg" cx="70" cy="70" r="58"/>
+          <circle class="score-ring-fill" id="scoreRingFill"
+            cx="70" cy="70" r="58"
+            stroke="{{ ring_color }}"
+            stroke-dasharray="{{ circumference }}"
+            stroke-dashoffset="{{ circumference }}"
+            data-target="{{ dash_offset }}"/>
+        </svg>
+        <div class="score-center">
+          <div class="score-number" style="color:{{ ring_color }};">{{ score }}</div>
+          <div class="score-sublabel">ATS SCORE</div>
+        </div>
+      </div>
+      <span class="tag score-badge {{ badge_class }}">{{ badge_label }}</span>
+    </div>
+
+    <div>
+      <div class="ats-right-header">
+        <div class="ats-title">
+          {% if jd and jd.get('job_title') %}{{ jd.job_title }}{% else %}Resume Analysis{% endif %}
+        </div>
+        <div class="ats-subtitle">Scored against job description keywords and requirements</div>
+      </div>
+      <div class="breakdown-grid">
+        {% set breakdown_items = [
+          ('skill_match',            'Skill Match'),
+          ('keyword_coverage',       'Keyword Coverage'),
+          ('experience_alignment',   'Experience Alignment'),
+          ('section_completeness',   'Section Completeness')
+        ] %}
+        {% for key, label in breakdown_items %}
+          {% set val = bd.get(key, 0) %}
+          {% if val >= 75 %}{% set bar_color = '#c8f135' %}
+          {% elif val >= 50 %}{% set bar_color = '#f5c842' %}
+          {% else %}{% set bar_color = '#ff5f5f' %}{% endif %}
+          <div class="breakdown-item">
+            <div class="breakdown-label">{{ label }}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:0%;background:{{ bar_color }};" data-width="{{ val }}"></div>
+            </div>
+            <div class="breakdown-score">{{ val }} / 100</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESULTS GRID ───────────────────────────────────── -->
+  <div class="results-grid">
+
+    <!-- GAP ANALYSIS -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Gap Analysis</div>
+          <div class="card-title">What's Missing</div>
+        </div>
+      </div>
+
+      <div class="gap-section">
+        <div class="gap-title">✅ Matched Skills</div>
+        <div class="tags">
+          {% for s in ats.get('matched_skills', [])[:10] %}
+            <span class="tag tag-green">{{ s }}</span>
+          {% else %}
+            <span style="font-size:13px;color:var(--muted);">None detected</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="gap-section">
+        <div class="gap-title">❌ Missing Skills</div>
+        <div class="tags">
+          {% for s in ats.get('missing_skills', [])[:10] %}
+            <span class="tag tag-red">{{ s }}</span>
+          {% else %}
+            <span style="font-size:13px;color:var(--muted);">Full coverage!</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="gap-section">
+        <div class="gap-title">🔑 Missing Keywords</div>
+        <div class="tags">
+          {% for k in ats.get('missing_keywords', [])[:10] %}
+            <span class="tag tag-yellow">{{ k }}</span>
+          {% else %}
+            <span style="font-size:13px;color:var(--muted);">Good keyword coverage</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- JD ANALYSIS -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">JD Analysis</div>
+          <div class="card-title">What They Want</div>
+        </div>
+      </div>
+
+      {% if jd %}
+      <div class="jd-info">
+        {% if jd.get('job_title') %}
+        <div class="jd-row">
+          <div class="jd-label">Role</div>
+          <div class="jd-value">{{ jd.job_title }}</div>
+        </div>
+        {% endif %}
+        {% if jd.get('experience_level') %}
+        <div class="jd-row">
+          <div class="jd-label">Level</div>
+          <span class="tag tag-blue">{{ jd.experience_level }}</span>
+        </div>
+        {% endif %}
+        {% if jd.get('required_skills') %}
+        <div class="jd-row">
+          <div class="jd-label">Required Skills</div>
+          <div class="tags">
+            {% for s in jd.required_skills[:8] %}<span class="tag tag-blue">{{ s }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% if jd.get('tools_technologies') %}
+        <div class="jd-row">
+          <div class="jd-label">Tools &amp; Tech</div>
+          <div class="tags">
+            {% for t in jd.tools_technologies[:8] %}<span class="tag tag-green">{{ t }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% if jd.get('preferred_skills') %}
+        <div class="jd-row">
+          <div class="jd-label">Preferred Skills</div>
+          <div class="tags">
+            {% for s in jd.preferred_skills[:6] %}<span class="tag tag-yellow">{{ s }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <p style="font-size:13px;color:var(--muted);">JD data not available.</p>
+      {% endif %}
+    </div>
+
+    <!-- RECOMMENDATIONS -->
+    {% if ats.get('recommendations') %}
+    <div class="card full-width">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Action Items</div>
+          <div class="card-title">Recommendations to Improve Your Score</div>
+        </div>
+      </div>
+      <ul class="recs">
+        {% for rec in ats.recommendations %}
+        <li class="rec-item">{{ rec }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- SELECTED PROJECTS -->
+    {% if result.get('selected_projects') %}
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Tailored Projects</div>
+          <div class="card-title">Top Picks for This Role</div>
+        </div>
+      </div>
+      {% for p in result.selected_projects %}
+      <div class="project-item">
+        <div class="project-name">{{ p.name }}</div>
+        <div class="project-reason">{{ p.reason }}</div>
+        <ul class="project-bullets">
+          {% for b in p.bullets %}<li>{{ b }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- TAILORED EXPERIENCE -->
+    {% if result.get('tailored_experience') %}
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Tailored Experience</div>
+          <div class="card-title">Rewritten Bullets</div>
+        </div>
+      </div>
+      {% for exp in result.tailored_experience %}
+      <div class="exp-item">
+        <div class="exp-role">{{ exp.role }}</div>
+        <div class="exp-meta">{{ exp.company }} · {{ exp.duration }}</div>
+        <ul class="exp-bullets">
+          {% for b in exp.bullets %}<li>{{ b }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- RESUME TEXT -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Optimized Resume</div>
+          <div class="card-title">ATS-Safe Plain Text</div>
+        </div>
+      </div>
+      {% if result.get('resume_text') %}
+      <pre class="resume-pre" id="resumeText">{{ result.resume_text }}</pre>
+      <button class="copy-btn" onclick="copyEl('resumeText',this)">Copy Resume</button>
+      {% else %}
+      <p style="font-size:13px;color:var(--muted);padding:16px;background:var(--surface2);border-radius:8px;">Resume text generation failed — try again.</p>
+      {% endif %}
+    </div>
+
+    <!-- COVER LETTER -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Cover Letter</div>
+          <div class="card-title">Tailored for This Role</div>
+        </div>
+      </div>
+      {% if result.get('cover_letter') %}
+      <div class="cover-text" id="coverText">{{ result.cover_letter }}</div>
+      <button class="copy-btn" onclick="copyEl('coverText',this)">Copy Cover Letter</button>
+      {% else %}
+      <p style="font-size:13px;color:var(--muted);">Cover letter not available.</p>
+      {% endif %}
+    </div>
+
+    <!-- LATEX -->
+    {% if result.get('latex') %}
+    <div class="card full-width">
+      <div class="card-header">
+        <div>
+          <div class="card-label">LaTeX Export</div>
+          <div class="card-title">Jake's Template — Overleaf Ready</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="copy-btn" onclick="copyEl('latexPre',this)" style="margin-top:0;">Copy LaTeX</button>
+          <a href="/export/latex/{{ result_id }}" class="btn btn-latex" style="font-size:11px;">⬇ Download .tex</a>
+        </div>
+      </div>
+      <pre class="latex-pre" id="latexPre">{{ result.latex }}</pre>
+    </div>
+    {% endif %}
+
+  </div><!-- /results-grid -->
+
+  <!-- EXPORT BAR -->
+  <div class="export-area">
+    <div class="export-text">
+      <h3>Your resume is ready</h3>
+      <p>Download as PDF for job applications, or as LaTeX to edit in Overleaf.</p>
+    </div>
+    <div class="export-btns">
+      <a href="/export/pdf/{{ result_id }}" class="btn btn-primary">⬇ Download PDF</a>
+      <a href="/export/latex/{{ result_id }}" class="btn btn-latex">⬇ LaTeX for Overleaf</a>
+      <a href="/" class="btn btn-ghost">New Analysis</a>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// Copy helper
+function copyEl(id, btn) {
+  const el = document.getElementById(id);
+  const text = el.tagName === 'PRE' ? el.textContent : el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2200);
+  });
+}
+
+// Animate score ring
+window.addEventListener('DOMContentLoaded', () => {
+  // Ring
+  const ring = document.getElementById('scoreRingFill');
+  if (ring) {
+    const target = parseFloat(ring.dataset.target);
+    setTimeout(() => {
+      ring.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)';
+      ring.style.strokeDashoffset = target;
+    }, 120);
+  }
+  // Bars
+  document.querySelectorAll('.bar-fill').forEach(bar => {
+    const w = bar.dataset.width;
+    setTimeout(() => {
+      bar.style.transition = 'width 1.2s cubic-bezier(.4,0,.2,1)';
+      bar.style.width = w + '%';
+    }, 200);
+  });
+});
+</script>
+
+</body>
+</html>
