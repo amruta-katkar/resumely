@@ -1,27 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Error — Resumely</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
-<style>
-:root { --bg:#0c0c0f; --surface:#14141a; --border:#2a2a38; --accent:#c8f135; --text:#e8e8f0; --muted:#6b6b85; }
-* { box-sizing:border-box; margin:0; padding:0; }
-body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
-.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:48px; max-width:480px; width:100%; text-align:center; }
-.icon { font-size:40px; margin-bottom:16px; }
-h1 { font-size:20px; margin-bottom:10px; }
-p { color:var(--muted); font-size:14px; margin-bottom:28px; line-height:1.6; }
-a { display:inline-block; padding:10px 24px; background:var(--accent); color:#0c0c0f; border-radius:7px; font-family:'DM Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.1em; text-decoration:none; }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-<div class="card">
-  <div class="icon">⚠️</div>
-  <h1>Something went wrong</h1>
-  <p>{{ message or "An unexpected error occurred. Please try again." }}</p>
-  <a href="/">Back to Home</a>
+<body style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+<div class="card" style="max-width:460px;width:100%;text-align:center;padding:40px;">
+  <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Something went wrong</div>
+  <div style="font-size:13px;color:var(--text-muted);margin-bottom:28px;line-height:1.6;">{{ message or "An unexpected error occurred. Please try again." }}</div>
+  <a href="/" class="btn btn-primary btn-full">← Back to Home</a>
 </div>
 </body>
 </html>

@@ -2,143 +2,807 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resumely — AI Resume Optimizer</title>
-<meta name="description" content="Optimize your resume with AI. ATS score, gap analysis, PDF and LaTeX export.">
-<meta name="robots" content="index, follow">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Resumely — AI Resume Optimizer for Every Career</title>
+<meta name="description" content="AI-powered resume optimizer. ATS score, gap analysis, tailored bullets, PDF & LaTeX export.">
+<meta name="robots" content="index,follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+/* ─── Page-specific overrides ─── */
+body { background: #F0F4FF; }
+
+/* NAVBAR */
+.navbar {
+  background: #fff;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 0 40px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.navbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px;
+}
+.brand-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--primary); display: inline-block;
+}
+.navbar-right { display: flex; align-items: center; gap: 12px; }
+.nav-badge-pill {
+  font-size: 11px; font-weight: 600; color: var(--primary);
+  background: var(--primary-light); border: 1px solid var(--primary-mid);
+  padding: 4px 10px; border-radius: 20px;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%);
+  padding: 52px 40px 48px;
+  text-align: center;
+  color: #fff;
+}
+.hero h1 {
+  font-size: clamp(26px, 4vw, 46px);
+  font-weight: 800; line-height: 1.15;
+  margin-bottom: 14px; letter-spacing: -0.5px;
+}
+.hero h1 span { color: #93C5FD; }
+.hero-sub {
+  font-size: 15px; opacity: 0.85; max-width: 520px;
+  margin: 0 auto 28px; line-height: 1.65;
+}
+.hero-chips {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+  margin-bottom: 28px;
+}
+.hero-chip {
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-size: 12px; font-weight: 500;
+  padding: 5px 12px; border-radius: 20px;
+}
+.hero-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #fff; color: var(--primary);
+  font-weight: 700; font-size: 14px;
+  padding: 13px 28px; border-radius: 10px; border: none; cursor: pointer;
+  transition: all 0.15s; box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+.hero-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+/* CONTENT WRAPPER */
+.content-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 36px 24px 80px;
+}
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--primary);
+  margin-bottom: 6px;
+}
+.section-title {
+  font-size: 20px; font-weight: 700; color: #0F172A;
+  margin-bottom: 20px; letter-spacing: -0.3px;
+}
+
+/* FORM CARD */
+.form-card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+/* INPUT BLOCKS */
+.input-block { margin-bottom: 22px; }
+.input-block:last-child { margin-bottom: 0; }
+
+.field-label-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 7px;
+}
+.field-label-text {
+  font-size: 13px; font-weight: 600; color: #334155;
+}
+.field-hint {
+  font-size: 11px; color: #94A3B8; font-weight: 400;
+}
+.char-count { font-size: 11px; color: #94A3B8; }
+.char-warn  { color: #DC2626 !important; }
+
+/* SKILL TAG EDITOR — looks like a textarea */
+.skill-box {
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px;
+  min-height: 80px;
+  cursor: text;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skill-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.skill-tags-area {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.skill-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #EFF6FF; color: #2563EB;
+  border: 1px solid #BFDBFE;
+  border-radius: 6px; padding: 4px 8px;
+  font-size: 12.5px; font-weight: 500;
+  line-height: 1;
+}
+.skill-tag-remove {
+  background: none; border: none; cursor: pointer;
+  color: #60A5FA; font-size: 13px; line-height: 1;
+  padding: 0; display: flex; align-items: center;
+  transition: color 0.1s;
+}
+.skill-tag-remove:hover { color: #DC2626; }
+/* The real input — visually invisible, just a cursor in the box */
+.skill-type-input {
+  border: none; outline: none; background: transparent;
+  font-size: 13.5px; font-family: 'Inter', sans-serif;
+  color: #0F172A; width: 100%; min-width: 140px;
+  padding: 0; margin: 0; line-height: 1.5;
+  caret-color: var(--primary);
+}
+.skill-type-input::placeholder { color: #94A3B8; }
+.skill-hint {
+  font-size: 11px; color: #94A3B8; margin-top: 4px;
+}
+
+/* TEXTAREA */
+.form-textarea {
+  width: 100%;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  background: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px; color: #0F172A;
+  padding: 10px 12px;
+  line-height: 1.65; resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.form-textarea::placeholder { color: #94A3B8; }
+
+/* TWO COLUMN FORM LAYOUT */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 680px) { .form-row { grid-template-columns: 1fr; } }
+
+/* DIVIDER */
+.form-divider {
+  border: none; border-top: 1px solid #F1F5F9;
+  margin: 24px 0;
+}
+
+/* TEMPLATE GRID */
+.tpl-section { margin-bottom: 24px; }
+.tpl-scroll {
+  display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px;
+}
+.tpl-scroll::-webkit-scrollbar { height: 4px; }
+.tpl-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+.tpl-chip {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 5px; padding: 10px 14px;
+  border: 2px solid #E2E8F0; border-radius: 10px;
+  background: #F8FAFC; cursor: pointer;
+  transition: all 0.15s; flex-shrink: 0;
+  min-width: 80px;
+}
+.tpl-chip:hover { border-color: var(--primary); background: var(--primary-light); }
+.tpl-chip.active { border-color: var(--primary); background: var(--primary-light); }
+.tpl-chip-icon { font-size: 18px; }
+.tpl-chip-name { font-size: 11px; font-weight: 600; color: #334155; white-space: nowrap; }
+.tpl-chip-cat  { font-size: 10px; color: #94A3B8; white-space: nowrap; }
+
+/* PDF UPLOAD ZONE */
+.upload-zone {
+  border: 2px dashed #CBD5E1;
+  border-radius: 10px;
+  padding: 28px 20px;
+  text-align: center; cursor: pointer;
+  background: #F8FAFC;
+  transition: all 0.18s;
+}
+.upload-zone:hover, .upload-zone.over {
+  border-color: var(--primary); background: var(--primary-light);
+}
+.upload-zone-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-zone-title { font-size: 14px; font-weight: 600; color: #0F172A; margin-bottom: 3px; }
+.upload-zone-sub { font-size: 12px; color: #64748B; }
+.upload-filename { font-size: 12px; color: var(--primary); margin-top: 8px; display: none; font-weight: 500; }
+
+/* INPUT MODE TABS */
+.mode-tabs {
+  display: flex; gap: 3px;
+  background: #F1F5F9; border-radius: 8px; padding: 3px;
+  margin-bottom: 20px; width: fit-content;
+}
+.mode-tab {
+  padding: 7px 16px; border: none; border-radius: 6px;
+  font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif;
+  color: #64748B; background: none; cursor: pointer; transition: all 0.15s;
+}
+.mode-tab.active {
+  background: #fff; color: var(--primary); font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* SUBMIT BUTTON */
+.submit-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  color: #fff; font-size: 15px; font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  border: none; border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+  transition: all 0.18s; letter-spacing: -0.2px;
+}
+.submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.45); }
+.submit-btn:disabled { opacity: 0.65; pointer-events: none; }
+
+/* ALERT */
+.alert-box {
+  display: none;
+  background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626;
+  padding: 10px 14px; border-radius: 8px;
+  font-size: 13px; margin-bottom: 16px;
+  align-items: center; gap: 8px;
+}
+.alert-box.show { display: flex; }
+
+/* HOW IT WORKS */
+.how-section { margin-top: 40px; }
+.how-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+}
+@media (max-width: 680px) { .how-grid { grid-template-columns: 1fr 1fr; } }
+.how-card {
+  background: #fff; border: 1px solid #E2E8F0;
+  border-radius: 12px; padding: 18px;
+}
+.how-num { font-size: 10px; font-weight: 700; color: var(--primary); letter-spacing: 0.08em; margin-bottom: 6px; }
+.how-title { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; color: #0F172A; }
+.how-desc { font-size: 12px; color: #64748B; line-height: 1.55; }
+
+/* LOADING */
+.loading-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(240,244,255,0.92); backdrop-filter: blur(6px);
+  z-index: 9999; align-items: center; justify-content: center;
+}
+.loading-overlay.active { display: flex; }
+.loading-card {
+  background: #fff; border: 1px solid #E2E8F0;
+  border-radius: 16px; padding: 36px 40px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  max-width: 360px; width: 90%; text-align: center;
+}
+.loading-spinner {
+  width: 44px; height: 44px;
+  border: 3.5px solid #DBEAFE; border-top-color: var(--primary);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+  margin: 0 auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-title { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+.loading-sub { font-size: 13px; color: #64748B; margin-bottom: 22px; }
+.lstep {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: #94A3B8; margin-bottom: 9px; text-align: left;
+}
+.lstep.active { color: var(--primary); font-weight: 500; }
+.lstep.done { color: #16A34A; }
+.lstep-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #E2E8F0; flex-shrink: 0; transition: background 0.2s;
+}
+.lstep.active .lstep-dot { background: var(--primary); }
+.lstep.done  .lstep-dot { background: #16A34A; }
+
+/* FOOTER */
+.footer {
+  text-align: center; padding: 20px; color: #94A3B8; font-size: 12px;
+  border-top: 1px solid #E2E8F0; background: #fff;
+}
+</style>
 </head>
 <body>
 
+<!-- LOADING OVERLAY -->
 <div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-spinner"></div>
-  <div class="loading-steps">
-    <div class="loading-step active" id="lstep1"><div class="step-dot"></div>Parsing resume structure...</div>
-    <div class="loading-step" id="lstep2"><div class="step-dot"></div>Analyzing job description...</div>
-    <div class="loading-step" id="lstep3"><div class="step-dot"></div>Calculating ATS score...</div>
-    <div class="loading-step" id="lstep4"><div class="step-dot"></div>Tailoring bullet points...</div>
-    <div class="loading-step" id="lstep5"><div class="step-dot"></div>Generating PDF &amp; LaTeX...</div>
+  <div class="loading-card">
+    <div class="loading-spinner"></div>
+    <div class="loading-title">Analyzing Your Resume</div>
+    <div class="loading-sub">AI working through 5 steps…</div>
+    <div class="lstep active" id="ls1"><div class="lstep-dot"></div>Parsing resume structure</div>
+    <div class="lstep" id="ls2"><div class="lstep-dot"></div>Analyzing job description</div>
+    <div class="lstep" id="ls3"><div class="lstep-dot"></div>Calculating ATS score &amp; gaps</div>
+    <div class="lstep" id="ls4"><div class="lstep-dot"></div>Tailoring bullet points</div>
+    <div class="lstep" id="ls5"><div class="lstep-dot"></div>Generating PDF &amp; LaTeX</div>
   </div>
 </div>
 
-<nav class="site-nav">
-  <span class="nav-logo">Resumely</span>
-  <span class="nav-tag">AI-Powered · ATS-Safe</span>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    Resumely<span class="brand-dot"></span>
+  </div>
+  <div class="navbar-right">
+    <span class="nav-badge-pill">AI-Powered</span>
+    <span style="font-size:12px;color:#64748B;">No sign-up needed</span>
+  </div>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
-  <div class="hero-eyebrow">Beat the Algorithm</div>
-  <h1>Your resume,<br><em>optimized</em> for any job.</h1>
-  <p class="hero-sub">AI parses your resume, scores it against the JD, rewrites weak bullets, and exports a ready-to-send PDF.</p>
-  <div class="hero-stats">
-    <div class="stat"><div class="stat-num">ATS</div><div class="stat-label">Score 0–100</div></div>
-    <div class="stat"><div class="stat-num">PDF</div><div class="stat-label">Clean Export</div></div>
-    <div class="stat"><div class="stat-num">TeX</div><div class="stat-label">LaTeX / Overleaf</div></div>
+  <h1>Turn your resume into a<br><span>job-winning match</span></h1>
+  <p class="hero-sub">
+    AI analyzes your resume against any job description — scores it, finds gaps,
+    rewrites bullets and exports a ready-to-send PDF.
+  </p>
+  <div class="hero-chips">
+    <span class="hero-chip">⚙ Engineering</span>
+    <span class="hero-chip">💰 Finance &amp; Banking</span>
+    <span class="hero-chip">🏛 Government</span>
+    <span class="hero-chip">🏥 Healthcare</span>
+    <span class="hero-chip">📚 Academia</span>
+    <span class="hero-chip">🎨 Design</span>
+    <span class="hero-chip">📊 Data Science</span>
   </div>
+  <button class="hero-cta" onclick="document.getElementById('formSection').scrollIntoView({behavior:'smooth'})">
+    ✦ Start Free Analysis →
+  </button>
 </section>
 
-<div class="main-wrapper">
+<!-- MAIN CONTENT -->
+<div class="content-wrap" id="formSection">
 
-  <div id="uploadAlert" class="alert alert-error"></div>
+  <div id="alertBox" class="alert-box"></div>
 
-  <div class="input-tabs">
-    <button class="tab-btn active" onclick="switchTab('text',this)">Paste Text</button>
-    <button class="tab-btn" onclick="switchTab('pdf',this)">Upload PDF</button>
-  </div>
+  <!-- ── SECTION 1: YOUR RESUME ──────────────────── -->
+  <div class="section-label">Step 1</div>
+  <div class="section-title">Your Resume Details</div>
 
-  <div class="form-card">
-    <form action="/generate" method="POST" id="mainForm">
+  <form action="/generate" method="POST" id="mainForm">
 
-      <div id="pdfPanel" style="display:none;margin-bottom:24px;">
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfInput').click()">
-          <div class="upload-icon">📄</div>
-          <div class="upload-label"><strong>Click to upload</strong> or drag &amp; drop your resume PDF</div>
-          <p style="font-size:11px;color:var(--muted);margin-top:6px;">Max 5MB · PDF only · text extracted into fields below</p>
-          <input type="file" id="pdfInput" accept=".pdf" onchange="handlePdfUpload(this)" style="display:none;">
-          <div class="upload-filename" id="uploadFilename"></div>
+    <!-- INPUT MODE TOGGLE -->
+    <div class="mode-tabs">
+      <button type="button" class="mode-tab active" onclick="setMode('text',this)">✏ Paste Text</button>
+      <button type="button" class="mode-tab" onclick="setMode('pdf',this)">📄 Upload PDF</button>
+    </div>
+
+    <!-- PDF UPLOAD (hidden by default) -->
+    <div id="pdfPanel" style="display:none; margin-bottom:24px;">
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('pdfInput').click()">
+        <div class="upload-zone-icon">📄</div>
+        <div class="upload-zone-title">Click to upload or drag &amp; drop your resume PDF</div>
+        <div class="upload-zone-sub">Max 5MB · PDF only · AI will distribute text into the fields below</div>
+        <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePdf(this)">
+        <div class="upload-filename" id="uploadFilename"></div>
+      </div>
+    </div>
+
+    <!-- FIRST FORM CARD: Skills + Projects + Experience -->
+    <div class="form-card">
+
+      <!-- SKILLS TAG EDITOR -->
+      <div class="input-block">
+        <div class="field-label-row">
+          <span class="field-label-text">Skills</span>
+          <span class="char-count" id="skillsCount">0 skills added</span>
+        </div>
+        <div class="skill-box" id="skillBox" onclick="focusSkillInput()">
+          <div class="skill-tags-area" id="skillTagsArea"></div>
+          <input type="textarea"
+            class="skill-type-input"
+            id="skillInput"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Type a skill and press Enter or comma to add…"
+            onkeydown="skillKeyDown(event)"
+          >
+        </div>
+        <div class="skill-hint">Press <kbd style="background:#F1F5F9;border:1px solid #CBD5E1;border-radius:3px;padding:1px 5px;font-size:10px;">Enter</kbd> or <kbd style="background:#F1F5F9;border:1px solid #CBD5E1;border-radius:3px;padding:1px 5px;font-size:10px;">,</kbd> to add a skill · Backspace to remove last</div>
+        <input type="hidden" name="skills" id="skillsHidden">
+      </div>
+
+      <hr class="form-divider">
+
+      <!-- PROJECTS + EXPERIENCE SIDE BY SIDE -->
+      <div class="form-row">
+        <div class="input-block" style="margin-bottom:0;">
+          <div class="field-label-row">
+            <span class="field-label-text">Projects</span>
+            <span class="char-count" id="projCount">0 / 5000</span>
+          </div>
+          <textarea
+            class="form-textarea" name="projects" id="projectsArea"
+            style="min-height:160px;"
+            placeholder="Each project on its own lines:
+
+Student Management System
+Python, Flask, PostgreSQL
+CRUD system for 500+ student records.
+
+E-Commerce Website
+React, Node.js, MongoDB
+Built cart, payment flow, admin panel."
+            oninput="charCount(this,'projCount',5000)"></textarea>
+        </div>
+
+        <div class="input-block" style="margin-bottom:0;">
+          <div class="field-label-row">
+            <span class="field-label-text">Experience</span>
+            <span class="char-count" id="expCount">0 / 5000</span>
+          </div>
+          <textarea
+            class="form-textarea" name="experience" id="expArea"
+            style="min-height:160px;"
+            placeholder="Role · Company · Dates
+Key responsibilities and achievements:
+
+Software Engineer · Acme Corp · 2022–2024
+Built REST APIs using Python Flask.
+Managed PostgreSQL databases.
+
+(If fresher, write internships or college work)"
+            oninput="charCount(this,'expCount',5000)"></textarea>
         </div>
       </div>
 
-      <div class="form-grid">
-        <div style="display:flex;flex-direction:column;gap:20px;">
+    </div><!-- /form-card -->
 
-          <div class="field-group">
-            <label class="field-label" for="skills">
-              Skills <span class="char-count" id="skillsCount">0 / 3000</span>
-            </label>
-            <textarea id="skills" name="skills"
-              placeholder="Python, Flask, PostgreSQL, REST APIs, Docker, Git, React..."
-              required oninput="updateCount(this,'skillsCount',3000)"></textarea>
-          </div>
+    <!-- ── SECTION 2: JOB DESCRIPTION ─────────────── -->
+    <div class="section-label" style="margin-top:32px;">Step 2</div>
+    <div class="section-title">Job Description</div>
 
-          <div class="field-group">
-            <label class="field-label" for="projects">
-              Projects <span class="char-count" id="projectsCount">0 / 5000</span>
-            </label>
-            <textarea id="projects" name="projects"
-              placeholder="Project name, tech stack, what you built, outcomes..."
-              required oninput="updateCount(this,'projectsCount',5000)"></textarea>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label" for="experience">
-              Experience <span class="char-count" id="expCount">0 / 5000</span>
-            </label>
-            <textarea id="experience" name="experience"
-              placeholder="Job title, company, dates, key responsibilities..."
-              required oninput="updateCount(this,'expCount',5000)"></textarea>
-          </div>
-
+    <div class="form-card">
+      <div class="input-block" style="margin-bottom:0;">
+        <div class="field-label-row">
+          <span class="field-label-text">Paste the full job description</span>
+          <span class="char-count" id="jdCount">0 / 5000</span>
         </div>
+        <textarea
+          class="form-textarea" name="job_description" id="jdArea"
+          style="min-height:200px;"
+          placeholder="Paste the complete job posting here — requirements, responsibilities, preferred skills, everything.
 
-        <div class="field-group">
-          <label class="field-label" for="job_description">
-            Job Description <span class="char-count" id="jdCount">0 / 5000</span>
-          </label>
-          <textarea id="job_description" name="job_description"
-            placeholder="Paste the full job description here. The more detail, the better the ATS match."
-            required oninput="updateCount(this,'jdCount',5000)"
-            style="height:340px;min-height:200px;"></textarea>
+Works for every role: Software Engineer, Financial Analyst, Government Officer,
+Data Scientist, Designer, Doctor, Professor, Marketing Manager…
 
-          <div style="margin-top:16px;">
-            <button type="submit" class="btn-generate" id="submitBtn">
-              Analyze &amp; Optimize Resume
-            </button>
-          </div>
-        </div>
+The more detail you paste, the more accurate the ATS score."
+          oninput="charCount(this,'jdCount',5000)"></textarea>
       </div>
+    </div>
 
-    </form>
-  </div>
+    <!-- ── SECTION 3: TEMPLATE ────────────────────── -->
+    <div class="section-label" style="margin-top:32px;">Step 3</div>
+    <div class="section-title">Resume Template <span style="font-size:13px;font-weight:400;color:#64748B;">(auto-selected by role, or pick manually)</span></div>
 
-  <div class="how-section">
-    <h2 class="section-title">How it works</h2>
-    <div class="steps-grid">
-      <div class="step-card"><div class="step-num">01</div><div class="step-title">Parse Resume</div><div class="step-desc">AI extracts name, skills, experience and projects into structured data.</div></div>
-      <div class="step-card"><div class="step-num">02</div><div class="step-title">Analyze JD</div><div class="step-desc">Required skills, tools and keywords extracted from the job description.</div></div>
-      <div class="step-card"><div class="step-num">03</div><div class="step-title">ATS Score</div><div class="step-desc">Keyword coverage, skill overlap and experience relevance scored 0–100.</div></div>
-      <div class="step-card"><div class="step-num">04</div><div class="step-title">Tailor Content</div><div class="step-desc">Bullets rewritten with JD keywords. No fake metrics, no hallucinations.</div></div>
-      <div class="step-card"><div class="step-num">05</div><div class="step-title">Export</div><div class="step-desc">Download polished resume as PDF or LaTeX for Overleaf.</div></div>
+    <div class="form-card" style="padding:20px 24px;">
+      <div class="tpl-scroll" id="templateScroll">
+        {% set tpls = [
+          ('classic','📄','Classic','All'),
+          ('tech','💻','Tech','Engineering'),
+          ('finance','💹','Finance','Finance'),
+          ('government','🏛','Govt','Government'),
+          ('academic','📚','Academic','Academia'),
+          ('executive','👔','Executive','Management'),
+          ('creative','🎨','Creative','Design'),
+          ('healthcare','🏥','Health','Healthcare'),
+          ('modern','✨','Modern','Any'),
+          ('minimal','◽','Minimal','Design'),
+        ] %}
+        {% for tid, icon, tname, tcat in tpls %}
+        <div class="tpl-chip {% if tid == 'classic' %}active{% endif %}"
+          onclick="selectTpl('{{ tid }}', this)"
+          data-id="{{ tid }}">
+          <div class="tpl-chip-icon">{{ icon }}</div>
+          <div class="tpl-chip-name">{{ tname }}</div>
+          <div class="tpl-chip-cat">{{ tcat }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="template_id" id="templateInput" value="classic">
+      <input type="hidden" name="extra_skills" id="extraSkillsInput" value="">
+    </div>
+
+    <!-- ── SUBMIT ──────────────────────────────────── -->
+    <div style="margin-top:28px;">
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <span>✦</span> Analyze &amp; Optimize My Resume
+      </button>
+      <div style="text-align:center;margin-top:10px;font-size:12px;color:#94A3B8;">
+        ~30 seconds · No sign-up · Data not shared
+      </div>
+    </div>
+
+  </form><!-- /mainForm -->
+
+  <!-- ── HOW IT WORKS ────────────────────────────── -->
+  <div class="how-section" id="howSection">
+    <div class="section-label">How it works</div>
+    <div class="section-title">6 steps from input to hired</div>
+    <div class="how-grid">
+      {% for num, icon, title, desc in [
+        ('01','🔍','Parse Resume','AI extracts name, skills, experience and projects into structured JSON.'),
+        ('02','📋','Analyze JD','Required skills, tools and keywords extracted from the job description.'),
+        ('03','📊','ATS Score','Keyword coverage, skill overlap and experience relevance — scored 0–100.'),
+        ('04','🔎','Gap Analysis','Missing skills, weak keywords and improvement areas clearly shown.'),
+        ('05','✏','Tailor Content','Bullets rewritten with JD keywords. No fake metrics added.'),
+        ('06','⬇','Export','Download PDF or LaTeX. 10 templates across all career types.'),
+      ] %}
+      <div class="how-card">
+        <div class="how-num">{{ num }} {{ icon }}</div>
+        <div class="how-title">{{ title }}</div>
+        <div class="how-desc">{{ desc }}</div>
+      </div>
+      {% endfor %}
     </div>
   </div>
 
-</div>
+</div><!-- /content-wrap -->
 
-<footer>
-  <span class="footer-logo">RESUMELY</span>
-  <span class="footer-note">No data sold. No tracking. Your resume stays yours.</span>
+<footer class="footer">
+  Resumely · AI Resume Optimizer · No data sold · No tracking · No sign-up required
 </footer>
 
 <script>
-function switchTab(mode,btn){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('pdfPanel').style.display=mode==='pdf'?'block':'none';}
-function updateCount(el,cid,max){const n=el.value.length;const c=document.getElementById(cid);c.textContent=n+' / '+max;c.className='char-count'+(n>max*.9?' char-warn':'');}
-async function handlePdfUpload(input){const file=input.files[0];if(!file)return;const fn=document.getElementById('uploadFilename');fn.style.display='block';fn.textContent='📎 '+file.name+' — extracting...';const fd=new FormData();fd.append('resume_pdf',file);try{const r=await fetch('/parse-pdf',{method:'POST',body:fd});const d=await r.json();if(d.text){document.getElementById('experience').value=d.text.substring(0,4800);updateCount(document.getElementById('experience'),'expCount',5000);fn.textContent='✅ Extracted — review & add Skills / Projects above';switchTab('text',document.querySelectorAll('.tab-btn')[0]);}else{showAlert(d.error||'Could not parse PDF.');fn.style.display='none';}}catch(e){showAlert('Upload failed. Paste resume as text.');fn.style.display='none';}}
-const zone=document.getElementById('uploadZone');if(zone){zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragging');});zone.addEventListener('dragleave',()=>zone.classList.remove('dragging'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('dragging');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf'){document.getElementById('pdfInput').files=e.dataTransfer.files;handlePdfUpload(document.getElementById('pdfInput'));}});}
-function showAlert(msg){const el=document.getElementById('uploadAlert');el.textContent=msg;el.classList.add('active');setTimeout(()=>el.classList.remove('active'),6000);}
-function startLoading(){const ids=['lstep1','lstep2','lstep3','lstep4','lstep5'];const delays=[0,4000,8000,12000,16000];ids.forEach((id,i)=>{setTimeout(()=>{if(i>0)document.getElementById(ids[i-1]).className='loading-step done';document.getElementById(id).className='loading-step active';},delays[i]);});}
-document.getElementById('mainForm').addEventListener('submit',function(){document.getElementById('loadingOverlay').classList.add('active');document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='Analyzing...';startLoading();});
+/* ── SKILL TAG EDITOR ────────────────────────────── */
+let skills = [];
+
+function focusSkillInput() {
+  document.getElementById('skillInput').focus();
+}
+
+function skillKeyDown(e) {
+  const inp = e.target;
+  const val = inp.value;
+
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const clean = val.replace(/,/g, '').trim();
+    if (clean) addSkill(clean);
+    inp.value = '';
+    return;
+  }
+  if (e.key === 'Backspace' && val === '' && skills.length > 0) {
+    removeSkill(skills.length - 1);
+  }
+}
+
+function addSkill(s) {
+  s = s.trim();
+  if (!s || skills.find(x => x.toLowerCase() === s.toLowerCase())) return;
+  skills.push(s);
+  renderSkills();
+  syncSkills();
+}
+
+function removeSkill(i) {
+  skills.splice(i, 1);
+  renderSkills();
+  syncSkills();
+}
+
+function renderSkills() {
+  const area = document.getElementById('skillTagsArea');
+  area.innerHTML = skills.map((s, i) =>
+    `<span class="skill-tag">
+       ${escHtml(s)}
+       <button type="button" class="skill-tag-remove" onclick="removeSkill(${i})" tabindex="-1" title="Remove">×</button>
+     </span>`
+  ).join('');
+}
+
+function syncSkills() {
+  document.getElementById('skillsHidden').value = skills.join(', ');
+  const c = document.getElementById('skillsCount');
+  c.textContent = skills.length + (skills.length === 1 ? ' skill' : ' skills') + ' added';
+  c.className = 'char-count' + (skills.length === 0 ? ' char-warn' : '');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── CHAR COUNTER ──────────────────────────────── */
+function charCount(el, cid, max) {
+  const n = el.value.length;
+  const c = document.getElementById(cid);
+  c.textContent = n + ' / ' + max;
+  c.className = 'char-count' + (n > max * 0.9 ? ' char-warn' : '');
+}
+
+/* ── INPUT MODE TOGGLE ─────────────────────────── */
+function setMode(mode, btn) {
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pdfPanel').style.display = mode === 'pdf' ? 'block' : 'none';
+}
+
+/* ── TEMPLATE SELECT ───────────────────────────── */
+function selectTpl(id, el) {
+  document.querySelectorAll('.tpl-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('templateInput').value = id;
+}
+
+/* ── PDF UPLOAD ─────────────────────────────────── */
+async function handlePdf(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const fn = document.getElementById('uploadFilename');
+  fn.style.display = 'block';
+  fn.textContent = '📎 ' + file.name + ' — extracting text…';
+
+  const fd = new FormData();
+  fd.append('resume_pdf', file);
+
+  try {
+    const r = await fetch('/parse-pdf', { method: 'POST', body: fd });
+    const d = await r.json();
+
+    if (d.text) {
+      // Smart distribute: parse the extracted text into sections
+      distributePdfText(d.text);
+      fn.textContent = '✅ ' + file.name + ' — text extracted into fields. Review each section.';
+      // Switch back to text mode
+      setMode('text', document.querySelectorAll('.mode-tab')[0]);
+    } else {
+      showAlert(d.error || 'Could not parse PDF. Please paste your resume as text.');
+      fn.style.display = 'none';
+    }
+  } catch (e) {
+    showAlert('Upload failed. Please paste your resume as text.');
+    fn.style.display = 'none';
+  }
+}
+
+function distributePdfText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Heuristic section detection
+  const sectionKw = {
+    skills: ['skill', 'technical', 'technology', 'tools', 'language', 'framework', 'competenc'],
+    projects: ['project', 'portfolio', 'work sample', 'assignment', 'capstone', 'development'],
+    experience: ['experience', 'employment', 'work history', 'internship', 'intern', 'job', 'career', 'position', 'role', 'company'],
+  };
+
+  let current = 'experience'; // default bucket
+  const buckets = { skills: [], projects: [], experience: [] };
+
+  for (const line of lines) {
+    const low = line.toLowerCase();
+    // Check if line is a section header
+    let matched = null;
+    for (const [sec, kws] of Object.entries(sectionKw)) {
+      if (kws.some(k => low.includes(k)) && line.length < 50) {
+        matched = sec;
+        break;
+      }
+    }
+    if (matched) { current = matched; continue; }
+    buckets[current].push(line);
+  }
+
+  // Skills: try to extract comma/bullet separated items
+  if (buckets.skills.length > 0) {
+    const rawSkills = buckets.skills.join(', ')
+      .split(/[,•|·\n\/]/)
+      .map(s => s.trim())
+      .filter(s => s.length > 1 && s.length < 30);
+
+    rawSkills.slice(0, 40).forEach(s => addSkill(s));
+  }
+
+  // Projects
+  if (buckets.projects.length > 0) {
+    document.getElementById('projectsArea').value = buckets.projects.join('\n');
+    charCount(document.getElementById('projectsArea'), 'projCount', 5000);
+  }
+
+  // Experience (always fill, merge remaining if projects empty)
+  const expLines = buckets.experience.length > 0
+    ? buckets.experience
+    : lines.slice(Math.floor(lines.length / 3));
+  document.getElementById('expArea').value = expLines.join('\n').substring(0, 4800);
+  charCount(document.getElementById('expArea'), 'expCount', 5000);
+}
+
+// Drag & drop on upload zone
+const uz = document.getElementById('uploadZone');
+if (uz) {
+  uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('over'); });
+  uz.addEventListener('dragleave', () => uz.classList.remove('over'));
+  uz.addEventListener('drop', e => {
+    e.preventDefault(); uz.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') {
+      document.getElementById('pdfInput').files = e.dataTransfer.files;
+      handlePdf(document.getElementById('pdfInput'));
+    }
+  });
+}
+
+/* ── ALERT ──────────────────────────────────────── */
+function showAlert(msg) {
+  const el = document.getElementById('alertBox');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 7000);
+}
+
+/* ── LOADING ANIMATION ─────────────────────────── */
+function startLoading() {
+  const ids = ['ls1','ls2','ls3','ls4','ls5'];
+  const delays = [0, 5000, 10000, 15000, 19000];
+  ids.forEach((id, i) => {
+    setTimeout(() => {
+      if (i > 0) document.getElementById(ids[i-1]).className = 'lstep done';
+      document.getElementById(id).className = 'lstep active';
+    }, delays[i]);
+  });
+}
+
+/* ── FORM SUBMIT ─────────────────────────────────── */
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+  // Flush partial skill input
+  const si = document.getElementById('skillInput');
+  if (si.value.trim()) addSkill(si.value.trim());
+  si.value = '';
+
+  // Validate
+  if (skills.length === 0) {
+    e.preventDefault();
+    focusSkillInput();
+    showAlert('Please add at least one skill before analyzing.');
+    document.getElementById('skillBox').style.borderColor = '#DC2626';
+    setTimeout(() => document.getElementById('skillBox').style.borderColor = '', 3000);
+    return;
+  }
+  if (!document.getElementById('jdArea').value.trim()) {
+    e.preventDefault();
+    document.getElementById('jdArea').focus();
+    showAlert('Please paste a job description.');
+    return;
+  }
+
+  document.getElementById('loadingOverlay').classList.add('active');
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').textContent = 'Analyzing…';
+  startLoading();
+});
 </script>
 </body>
 </html>

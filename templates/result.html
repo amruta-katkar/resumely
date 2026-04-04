@@ -2,231 +2,458 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your Results — Resumely</title>
-<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Results — Resumely</title>
+<meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+body { background: #F0F4FF; }
+
+/* NAVBAR */
+.navbar {
+  background: #fff; border-bottom: 1px solid #E2E8F0;
+  padding: 0 32px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.navbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px;
+  text-decoration: none;
+}
+.brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); display: inline-block; }
+.nav-actions { display: flex; gap: 10px; align-items: center; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  font-family: 'Inter', sans-serif; cursor: pointer; border: none;
+  text-decoration: none; transition: all 0.15s; white-space: nowrap;
+}
+.btn:hover { text-decoration: none; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary-mid); }
+.btn-outline:hover { background: var(--primary-light); }
+.btn-ghost { background: #fff; color: #64748B; border: 1.5px solid #E2E8F0; }
+.btn-ghost:hover { border-color: #CBD5E1; color: #334155; }
+
+/* PAGE WRAP */
+.page-wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+
+/* ATS HERO CARD */
+.ats-hero {
+  background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%);
+  border-radius: 16px; padding: 28px 32px; color: #fff;
+  display: flex; align-items: center; gap: 32px;
+  margin-bottom: 24px; box-shadow: 0 4px 20px rgba(37,99,235,0.3);
+}
+@media (max-width:680px) { .ats-hero { flex-direction: column; gap: 20px; padding: 20px; } }
+
+/* SCORE RING */
+.score-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+.score-ring { position: relative; width: 120px; height: 120px; }
+.score-ring svg { transform: rotate(-90deg); display: block; }
+.ring-bg   { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 10; }
+.ring-fill { fill: none; stroke: #fff; stroke-width: 10; stroke-linecap: round; }
+.score-inner {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.score-num   { font-size: 32px; font-weight: 800; color: #fff; line-height: 1; }
+.score-label { font-size: 11px; color: rgba(255,255,255,.7); }
+.match-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.28);
+  padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+
+.ats-right { flex: 1; min-width: 0; }
+.ats-role  { font-size: 19px; font-weight: 700; margin-bottom: 3px; }
+.ats-meta  { font-size: 12px; opacity: .8; margin-bottom: 16px; }
+.bd-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width:500px){ .bd-grid { grid-template-columns:1fr; } }
+.bd-label  { font-size: 11px; opacity: .75; margin-bottom: 5px; font-weight: 500; }
+.bd-track  { height: 5px; background: rgba(255,255,255,.2); border-radius: 3px; overflow: hidden; }
+.bd-fill   { height: 100%; border-radius: 3px; background: #fff; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+.bd-score  { font-size: 11px; font-weight: 600; opacity: .9; margin-top: 3px; }
+
+/* SECTION LAYOUT */
+.section-gap { margin-bottom: 20px; }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media(max-width:700px) { .result-grid { grid-template-columns: 1fr; } }
+.full-col { grid-column: 1 / -1; }
+
+/* CARDS */
+.rcard {
+  background: #fff; border: 1px solid #E2E8F0;
+  border-radius: 14px; padding: 22px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+.rcard-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #64748B; margin-bottom: 3px; }
+.rcard-title { font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 14px; }
+
+/* TAGS */
+.tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 500;
+}
+.tag-green  { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+.tag-red    { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+.tag-yellow { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+.tag-blue   { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+.tag-gray   { background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; }
+
+/* CLICKABLE TAG */
+.tag-btn {
+  cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 500;
+}
+.tag-btn:hover { transform: scale(1.04); }
+.tag-btn.unconfirmed { background: #F8FAFC; color: #64748B; border: 1.5px dashed #CBD5E1; }
+.tag-btn.confirmed  { background: #F0FDF4; color: #16A34A; border: 1.5px solid #86EFAC; }
+
+/* GAP SECTION */
+.gap-group { margin-bottom: 14px; }
+.gap-group:last-child { margin-bottom: 0; }
+.gap-group-title { font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 7px; }
+
+/* SKILL UPDATER */
+.skill-updater-box {
+  background: #EFF6FF; border: 1px solid #BFDBFE;
+  border-radius: 10px; padding: 16px;
+}
+.updater-hint { font-size: 12px; color: #3B82F6; margin-bottom: 10px; font-weight: 500; }
+.manual-row { display: flex; gap: 8px; margin-top: 12px; }
+.manual-input {
+  flex: 1; border: 1.5px solid #BFDBFE; border-radius: 7px;
+  padding: 8px 12px; font-size: 13px; font-family: 'Inter', sans-serif;
+  background: #fff; color: #0F172A; outline: none;
+}
+.manual-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.update-score-btn {
+  padding: 8px 18px; background: var(--primary); color: #fff;
+  border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
+  font-family: 'Inter', sans-serif; cursor: pointer; white-space: nowrap;
+  transition: all .15s;
+}
+.update-score-btn:hover { background: var(--primary-dark); }
+.update-score-btn:disabled { opacity: .6; pointer-events: none; }
+.update-msg { font-size: 12px; margin-top: 8px; font-weight: 500; display: none; }
+
+/* RECS */
+.rec-list { display: flex; flex-direction: column; gap: 8px; }
+.rec-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; border-radius: 8px;
+  background: #EFF6FF; border: 1px solid #BFDBFE;
+  font-size: 12.5px; color: #334155; line-height: 1.55;
+}
+.rec-icon { flex-shrink: 0; margin-top: 1px; }
+
+/* PROJECT / EXP */
+.project-card { border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px; margin-bottom: 10px; background: #F8FAFC; }
+.project-card:last-child { margin-bottom: 0; }
+.proj-name   { font-size: 13.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px; }
+.proj-reason { font-size: 12px; color: #64748B; font-style: italic; margin-bottom: 8px; }
+.proj-bullet { font-size: 12.5px; color: #334155; padding-left: 14px; position: relative; line-height: 1.5; margin-bottom: 3px; }
+.proj-bullet::before { content: '▸'; position: absolute; left: 0; color: var(--primary); font-size: 11px; top: 1px; }
+
+.exp-item { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid #F1F5F9; }
+.exp-item:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
+.exp-role   { font-size: 13.5px; font-weight: 700; color: #0F172A; }
+.exp-meta   { font-size: 11.5px; color: #64748B; margin: 2px 0 7px; }
+.exp-bullet { font-size: 12.5px; color: #334155; padding-left: 13px; position: relative; line-height: 1.5; margin-bottom: 3px; }
+.exp-bullet::before { content: '•'; position: absolute; left: 2px; color: var(--primary); }
+
+/* TEXT BLOCKS */
+.resume-pre {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11.5px; line-height: 1.75; color: #334155;
+  white-space: pre-wrap; word-break: break-word;
+  background: #F8FAFC; border: 1px solid #E2E8F0;
+  border-radius: 8px; padding: 16px;
+  max-height: 360px; overflow-y: auto;
+}
+.cover-text {
+  font-size: 13.5px; line-height: 1.85; color: #334155;
+  white-space: pre-wrap; background: #F8FAFC;
+  border: 1px solid #E2E8F0; border-radius: 8px;
+  padding: 16px; max-height: 300px; overflow-y: auto;
+}
+.latex-pre {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.65;
+  color: #3B5280; background: #F0F4FF;
+  border: 1px solid #BFDBFE; border-radius: 8px;
+  padding: 16px; max-height: 260px; overflow: auto;
+}
+
+/* COPY BTN */
+.copy-btn {
+  margin-top: 10px; display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border-radius: 7px;
+  background: #fff; border: 1.5px solid #E2E8F0;
+  font-size: 12px; color: #64748B; font-weight: 500;
+  cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif;
+}
+.copy-btn:hover { border-color: var(--primary); color: var(--primary); background: #EFF6FF; }
+.copy-btn.copied { border-color: #16A34A; color: #16A34A; background: #F0FDF4; }
+
+/* TEMPLATE CHIPS (readonly) */
+.tpl-mini-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.tpl-mini {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 8px;
+  background: #F8FAFC; border: 1px solid #E2E8F0;
+  font-size: 12px; color: #64748B;
+}
+.tpl-mini.active-tpl {
+  background: #EFF6FF; border-color: var(--primary-mid); color: var(--primary); font-weight: 600;
+}
+
+/* EXPORT BAR */
+.export-bar {
+  background: linear-gradient(135deg, var(--primary) 0%, #1E40AF 100%);
+  border-radius: 14px; padding: 20px 28px; color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px; margin-top: 24px;
+  box-shadow: 0 4px 16px rgba(37,99,235,.3);
+}
+.eb-text h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.eb-text p  { font-size: 12px; opacity: .8; }
+.eb-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-white   { background: #fff; color: var(--primary); font-weight: 700; border: none; }
+.btn-outline-w { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+.btn-outline-w:hover { background: rgba(255,255,255,.25); }
+
+/* FOOTER */
+.footer { text-align: center; padding: 20px; color: #94A3B8; font-size: 12px; background: #fff; border-top: 1px solid #E2E8F0; margin-top: 40px; }
+</style>
 </head>
 <body>
 
-<nav class="site-nav">
-  <a href="/" class="nav-logo">Resumely</a>
+{% set ats   = result.get('ats_report', {}) %}
+{% set score = ats.get('total_score', 0) %}
+{% set bd    = ats.get('breakdown', {}) %}
+{% set jd    = result.get('parsed_jd', {}) or {} %}
+{% set pr    = result.get('parsed_resume', {}) or {} %}
+{% set tid   = result.get('template_id', 'classic') %}
+{% set circ  = 364.4 %}
+{% set doff  = circ - (circ * score / 100) %}
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="navbar-brand">Resumely<span class="brand-dot"></span></a>
   <div class="nav-actions">
     <a href="/export/pdf/{{ result_id }}" class="btn btn-primary">⬇ Download PDF</a>
-    <a href="/export/latex/{{ result_id }}" class="btn btn-latex">⬇ LaTeX (.tex)</a>
+    <a href="/export/latex/{{ result_id }}" class="btn btn-outline">⬇ LaTeX</a>
     <a href="/" class="btn btn-ghost">New Analysis</a>
   </div>
 </nav>
 
-<div class="page">
+<div class="page-wrap">
 
-  <div class="result-header">
-    <h1>Analysis Complete</h1>
-    <p class="subtitle">Your optimized resume is ready. Review each section below.</p>
-  </div>
-
-  <!-- ── ATS SCORE ─────────────────────────────────────── -->
-  {% set ats = result.get('ats_report', {}) %}
-  {% set score = ats.get('total_score', 0) %}
-  {% set bd    = ats.get('breakdown', {}) %}
-  {% set jd    = result.get('parsed_jd', {}) %}
-
-  {% if score >= 75 %}
-    {% set ring_color = '#c8f135' %}{% set badge_class = 'tag-green' %}{% set badge_label = 'Strong Match' %}
-  {% elif score >= 50 %}
-    {% set ring_color = '#f5c842' %}{% set badge_class = 'tag-yellow' %}{% set badge_label = 'Moderate Match' %}
-  {% else %}
-    {% set ring_color = '#ff5f5f' %}{% set badge_class = 'tag-red' %}{% set badge_label = 'Needs Work' %}
-  {% endif %}
-
-  {% set circumference = 364.4 %}
-  {% set dash_offset = circumference - (circumference * score / 100) %}
-
-  <div class="ats-card">
+  <!-- ── ATS SCORE HERO ────────────────────────────────── -->
+  <div class="ats-hero">
     <div class="score-ring-wrap">
       <div class="score-ring">
-        <svg viewBox="0 0 140 140" width="140" height="140">
-          <circle class="score-ring-bg" cx="70" cy="70" r="58"/>
-          <circle class="score-ring-fill" id="scoreRingFill"
-            cx="70" cy="70" r="58"
-            stroke="{{ ring_color }}"
-            stroke-dasharray="{{ circumference }}"
-            stroke-dashoffset="{{ circumference }}"
-            data-target="{{ dash_offset }}"/>
+        <svg viewBox="0 0 120 120" width="120" height="120">
+          <circle class="ring-bg" cx="60" cy="60" r="50"/>
+          <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="50"
+            stroke-dasharray="{{ circ }}" stroke-dashoffset="{{ circ }}"
+            data-target="{{ doff }}"/>
         </svg>
-        <div class="score-center">
-          <div class="score-number" style="color:{{ ring_color }};">{{ score }}</div>
-          <div class="score-sublabel">ATS SCORE</div>
+        <div class="score-inner">
+          <div class="score-num" id="scoreNum">0</div>
+          <div class="score-label">/ 100</div>
         </div>
       </div>
-      <span class="tag score-badge {{ badge_class }}">{{ badge_label }}</span>
+      <div class="match-pill">
+        {% if score >= 75 %}✅ Strong Match
+        {% elif score >= 50 %}⚠ Moderate Match
+        {% else %}❌ Needs Work{% endif %}
+      </div>
     </div>
 
-    <div>
-      <div class="ats-right-header">
-        <div class="ats-title">
-          {% if jd and jd.get('job_title') %}{{ jd.job_title }}{% else %}Resume Analysis{% endif %}
-        </div>
-        <div class="ats-subtitle">Scored against job description keywords and requirements</div>
+    <div class="ats-right">
+      <div class="ats-role">
+        {% if jd.get('job_title') %}{{ jd.job_title }}{% else %}Resume Analysis{% endif %}
       </div>
-      <div class="breakdown-grid">
-        {% set breakdown_items = [
-          ('skill_match',            'Skill Match'),
-          ('keyword_coverage',       'Keyword Coverage'),
-          ('experience_alignment',   'Experience Alignment'),
-          ('section_completeness',   'Section Completeness')
+      <div class="ats-meta">
+        {% if jd.get('job_category') %}{{ jd.job_category }}{% endif %}
+        {% if jd.get('experience_level') %} · {{ jd.experience_level }}{% endif %}
+        {% if jd.get('industry') %} · {{ jd.industry }}{% endif %}
+      </div>
+      <div class="bd-grid">
+        {% for key, label in [
+          ('skill_match','Skill Match'),
+          ('keyword_coverage','Keyword Coverage'),
+          ('experience_alignment','Experience Align'),
+          ('section_completeness','Completeness')
         ] %}
-        {% for key, label in breakdown_items %}
-          {% set val = bd.get(key, 0) %}
-          {% if val >= 75 %}{% set bar_color = '#c8f135' %}
-          {% elif val >= 50 %}{% set bar_color = '#f5c842' %}
-          {% else %}{% set bar_color = '#ff5f5f' %}{% endif %}
-          <div class="breakdown-item">
-            <div class="breakdown-label">{{ label }}</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:0%;background:{{ bar_color }};" data-width="{{ val }}"></div>
-            </div>
-            <div class="breakdown-score">{{ val }} / 100</div>
-          </div>
+        {% set v = bd.get(key, 0) %}
+        <div>
+          <div class="bd-label">{{ label }}</div>
+          <div class="bd-track"><div class="bd-fill" style="width:0%" data-w="{{ v }}"></div></div>
+          <div class="bd-score">{{ v }} / 100</div>
+        </div>
         {% endfor %}
       </div>
     </div>
   </div>
 
   <!-- ── RESULTS GRID ───────────────────────────────────── -->
-  <div class="results-grid">
+  <div class="result-grid">
 
     <!-- GAP ANALYSIS -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-label">Gap Analysis</div>
-          <div class="card-title">What's Missing</div>
-        </div>
-      </div>
+    <div class="rcard">
+      <div class="rcard-label">Gap Analysis</div>
+      <div class="rcard-title">What's Missing vs What You Have</div>
 
-      <div class="gap-section">
-        <div class="gap-title">✅ Matched Skills</div>
-        <div class="tags">
-          {% for s in ats.get('matched_skills', [])[:10] %}
+      <div class="gap-group">
+        <div class="gap-group-title">✅ Matched Skills</div>
+        <div class="tags-row">
+          {% for s in ats.get('matched_skills', [])[:12] %}
             <span class="tag tag-green">{{ s }}</span>
           {% else %}
-            <span style="font-size:13px;color:var(--muted);">None detected</span>
+            <span style="font-size:12px;color:#94A3B8;">None detected</span>
           {% endfor %}
         </div>
       </div>
 
-      <div class="gap-section">
-        <div class="gap-title">❌ Missing Skills</div>
-        <div class="tags">
-          {% for s in ats.get('missing_skills', [])[:10] %}
+      <div class="gap-group">
+        <div class="gap-group-title">❌ Missing Skills</div>
+        <div class="tags-row">
+          {% for s in ats.get('missing_skills', [])[:12] %}
             <span class="tag tag-red">{{ s }}</span>
           {% else %}
-            <span style="font-size:13px;color:var(--muted);">Full coverage!</span>
+            <span style="font-size:12px;color:#94A3B8;">Full coverage — great!</span>
           {% endfor %}
         </div>
       </div>
 
-      <div class="gap-section">
-        <div class="gap-title">🔑 Missing Keywords</div>
-        <div class="tags">
+      <div class="gap-group">
+        <div class="gap-group-title">🔑 Missing Keywords</div>
+        <div class="tags-row">
           {% for k in ats.get('missing_keywords', [])[:10] %}
             <span class="tag tag-yellow">{{ k }}</span>
           {% else %}
-            <span style="font-size:13px;color:var(--muted);">Good keyword coverage</span>
+            <span style="font-size:12px;color:#94A3B8;">Good keyword coverage</span>
           {% endfor %}
         </div>
       </div>
     </div>
 
     <!-- JD ANALYSIS -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-label">JD Analysis</div>
-          <div class="card-title">What They Want</div>
-        </div>
-      </div>
+    <div class="rcard">
+      <div class="rcard-label">JD Analysis</div>
+      <div class="rcard-title">What They Want</div>
 
       {% if jd %}
-      <div class="jd-info">
+      <div style="display:flex;flex-direction:column;gap:14px;">
         {% if jd.get('job_title') %}
-        <div class="jd-row">
-          <div class="jd-label">Role</div>
-          <div class="jd-value">{{ jd.job_title }}</div>
+        <div>
+          <div style="font-size:11px;color:#94A3B8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Role</div>
+          <div style="font-size:14px;font-weight:700;color:#0F172A;">{{ jd.job_title }}</div>
         </div>
         {% endif %}
         {% if jd.get('experience_level') %}
-        <div class="jd-row">
-          <div class="jd-label">Level</div>
+        <div>
+          <div style="font-size:11px;color:#94A3B8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Level</div>
           <span class="tag tag-blue">{{ jd.experience_level }}</span>
         </div>
         {% endif %}
         {% if jd.get('required_skills') %}
-        <div class="jd-row">
-          <div class="jd-label">Required Skills</div>
-          <div class="tags">
-            {% for s in jd.required_skills[:8] %}<span class="tag tag-blue">{{ s }}</span>{% endfor %}
-          </div>
+        <div>
+          <div style="font-size:11px;color:#94A3B8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Required Skills</div>
+          <div class="tags-row">{% for s in jd.required_skills[:8] %}<span class="tag tag-blue">{{ s }}</span>{% endfor %}</div>
         </div>
         {% endif %}
         {% if jd.get('tools_technologies') %}
-        <div class="jd-row">
-          <div class="jd-label">Tools &amp; Tech</div>
-          <div class="tags">
-            {% for t in jd.tools_technologies[:8] %}<span class="tag tag-green">{{ t }}</span>{% endfor %}
-          </div>
+        <div>
+          <div style="font-size:11px;color:#94A3B8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Tools &amp; Tech</div>
+          <div class="tags-row">{% for t in jd.tools_technologies[:8] %}<span class="tag tag-gray">{{ t }}</span>{% endfor %}</div>
         </div>
         {% endif %}
-        {% if jd.get('preferred_skills') %}
-        <div class="jd-row">
-          <div class="jd-label">Preferred Skills</div>
-          <div class="tags">
-            {% for s in jd.preferred_skills[:6] %}<span class="tag tag-yellow">{{ s }}</span>{% endfor %}
-          </div>
+        {% if jd.get('keywords') %}
+        <div>
+          <div style="font-size:11px;color:#94A3B8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">Keywords</div>
+          <div class="tags-row">{% for k in jd.keywords[:8] %}<span class="tag tag-yellow">{{ k }}</span>{% endfor %}</div>
         </div>
         {% endif %}
       </div>
       {% else %}
-      <p style="font-size:13px;color:var(--muted);">JD data not available.</p>
+      <div style="font-size:13px;color:#94A3B8;">JD data unavailable.</div>
       {% endif %}
+    </div>
+
+    <!-- ── SKILL UPDATER ─────────────────────────────── -->
+    <div class="rcard full-col" id="skillUpdaterSection">
+      <div class="rcard-label">Skill Updater</div>
+      <div class="rcard-title">Confirm skills you have → boost your ATS score</div>
+
+      {% set implied = ats.get('you_have_but_not_listed', []) %}
+      {% if implied %}
+      <div class="skill-updater-box" style="margin-bottom:16px;">
+        <div class="updater-hint">
+          💡 AI found these skills implied by your projects/experience — but not listed. Click any you actually have:
+        </div>
+        <div class="tags-row" id="impliedRow">
+          {% for s in implied %}
+          <span class="tag-btn unconfirmed" onclick="toggleImplied(this, '{{ s }}')" data-skill="{{ s }}">
+            + {{ s }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#334155;margin-bottom:8px;">Your skills <span id="scoreTag" style="background:#EFF6FF;color:var(--primary);padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">Score: {{ score }}</span></div>
+        <div class="tags-row" id="confirmedRow">
+          {% for s in pr.get('skills', []) %}
+          <span class="tag tag-green">{{ s }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="manual-row">
+        <input type="text" class="manual-input" id="manualInput"
+          placeholder="Type a skill to add manually (e.g. Docker, SQL, Canva)…"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addManual();}">
+        <button class="update-score-btn" id="updateBtn" onclick="saveUpdate()">↑ Update Score</button>
+      </div>
+      <div class="update-msg" id="updateMsg"></div>
     </div>
 
     <!-- RECOMMENDATIONS -->
     {% if ats.get('recommendations') %}
-    <div class="card full-width">
-      <div class="card-header">
-        <div>
-          <div class="card-label">Action Items</div>
-          <div class="card-title">Recommendations to Improve Your Score</div>
-        </div>
-      </div>
-      <ul class="recs">
+    <div class="rcard full-col">
+      <div class="rcard-label">Action Items</div>
+      <div class="rcard-title">Recommendations to Improve Your Score</div>
+      <div class="rec-list">
         {% for rec in ats.recommendations %}
-        <li class="rec-item">{{ rec }}</li>
+        <div class="rec-item"><span class="rec-icon">💡</span><span>{{ rec }}</span></div>
         {% endfor %}
-      </ul>
+      </div>
     </div>
     {% endif %}
 
     <!-- SELECTED PROJECTS -->
     {% if result.get('selected_projects') %}
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-label">Tailored Projects</div>
-          <div class="card-title">Top Picks for This Role</div>
-        </div>
-      </div>
+    <div class="rcard">
+      <div class="rcard-label">Tailored Projects</div>
+      <div class="rcard-title">Most Relevant for This Role</div>
       {% for p in result.selected_projects %}
-      <div class="project-item">
-        <div class="project-name">{{ p.name }}</div>
-        <div class="project-reason">{{ p.reason }}</div>
-        <ul class="project-bullets">
-          {% for b in p.bullets %}<li>{{ b }}</li>{% endfor %}
-        </ul>
+      <div class="project-card">
+        <div class="proj-name">{{ p.name }}</div>
+        <div class="proj-reason">{{ p.reason }}</div>
+        {% for b in p.bullets %}<div class="proj-bullet">{{ b }}</div>{% endfor %}
       </div>
       {% endfor %}
     </div>
@@ -234,125 +461,213 @@
 
     <!-- TAILORED EXPERIENCE -->
     {% if result.get('tailored_experience') %}
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-label">Tailored Experience</div>
-          <div class="card-title">Rewritten Bullets</div>
-        </div>
-      </div>
+    <div class="rcard">
+      <div class="rcard-label">Tailored Experience</div>
+      <div class="rcard-title">Rewritten Bullets</div>
       {% for exp in result.tailored_experience %}
       <div class="exp-item">
         <div class="exp-role">{{ exp.role }}</div>
         <div class="exp-meta">{{ exp.company }} · {{ exp.duration }}</div>
-        <ul class="exp-bullets">
-          {% for b in exp.bullets %}<li>{{ b }}</li>{% endfor %}
-        </ul>
+        {% for b in exp.bullets %}<div class="exp-bullet">{{ b }}</div>{% endfor %}
       </div>
       {% endfor %}
     </div>
     {% endif %}
 
     <!-- RESUME TEXT -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-label">Optimized Resume</div>
-          <div class="card-title">ATS-Safe Plain Text</div>
-        </div>
+    <div class="rcard">
+      <div class="rcard-label">Optimized Resume</div>
+      <div class="rcard-title">ATS-Safe Plain Text
+        <span style="background:#EFF6FF;color:var(--primary);font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;margin-left:8px;">{{ tid | title }} Template</span>
       </div>
       {% if result.get('resume_text') %}
       <pre class="resume-pre" id="resumeText">{{ result.resume_text }}</pre>
-      <button class="copy-btn" onclick="copyEl('resumeText',this)">Copy Resume</button>
+      <button class="copy-btn" onclick="copyEl('resumeText', this)">📋 Copy Resume</button>
       {% else %}
-      <p style="font-size:13px;color:var(--muted);padding:16px;background:var(--surface2);border-radius:8px;">Resume text generation failed — try again.</p>
+      <div style="padding:14px;background:#FEF2F2;border-radius:8px;font-size:13px;color:#DC2626;">Resume text not generated — try again.</div>
       {% endif %}
     </div>
 
     <!-- COVER LETTER -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-label">Cover Letter</div>
-          <div class="card-title">Tailored for This Role</div>
-        </div>
-      </div>
+    <div class="rcard">
+      <div class="rcard-label">Cover Letter</div>
+      <div class="rcard-title">Tailored for This Role</div>
       {% if result.get('cover_letter') %}
       <div class="cover-text" id="coverText">{{ result.cover_letter }}</div>
-      <button class="copy-btn" onclick="copyEl('coverText',this)">Copy Cover Letter</button>
+      <button class="copy-btn" onclick="copyEl('coverText', this)">📋 Copy Cover Letter</button>
       {% else %}
-      <p style="font-size:13px;color:var(--muted);">Cover letter not available.</p>
+      <div style="font-size:13px;color:#94A3B8;">Cover letter not available.</div>
       {% endif %}
     </div>
 
     <!-- LATEX -->
     {% if result.get('latex') %}
-    <div class="card full-width">
-      <div class="card-header">
+    <div class="rcard full-col">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
         <div>
-          <div class="card-label">LaTeX Export</div>
-          <div class="card-title">Jake's Template — Overleaf Ready</div>
+          <div class="rcard-label">LaTeX Export</div>
+          <div class="rcard-title" style="margin-bottom:0;">Jake's Template — Overleaf Ready</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="copy-btn" onclick="copyEl('latexPre',this)" style="margin-top:0;">Copy LaTeX</button>
-          <a href="/export/latex/{{ result_id }}" class="btn btn-latex" style="font-size:11px;">⬇ Download .tex</a>
+          <button class="copy-btn" style="margin-top:0;" onclick="copyEl('latexPre', this)">📋 Copy LaTeX</button>
+          <a href="/export/latex/{{ result_id }}" class="btn btn-outline btn-ghost" style="font-size:12px;">⬇ .tex file</a>
         </div>
       </div>
       <pre class="latex-pre" id="latexPre">{{ result.latex }}</pre>
     </div>
     {% endif %}
 
-  </div><!-- /results-grid -->
+    <!-- TEMPLATE INFO -->
+    {% if templates %}
+    <div class="rcard full-col">
+      <div class="rcard-label">All Templates</div>
+      <div class="rcard-title">10 Role-Aware Templates Available</div>
+      <div class="tpl-mini-grid">
+        {% set tpl_icons = {'classic':'📄','tech':'💻','finance':'💹','government':'🏛','academic':'📚','executive':'👔','creative':'🎨','healthcare':'🏥','modern':'✨','minimal':'◽'} %}
+        {% for tid2, tdata in templates.items() %}
+        <div class="tpl-mini {% if tid2 == result.get('template_id') %}active-tpl{% endif %}">
+          {{ tpl_icons.get(tid2,'📄') }} {{ tdata.name }}
+          <span style="font-size:10px;color:#94A3B8;">({{ tdata.cat }})</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:#94A3B8;">
+        To use a different template, <a href="/" style="color:var(--primary);font-weight:600;">run a new analysis</a> and select it before submitting.
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- /result-grid -->
 
   <!-- EXPORT BAR -->
-  <div class="export-area">
-    <div class="export-text">
+  <div class="export-bar">
+    <div class="eb-text">
       <h3>Your resume is ready</h3>
-      <p>Download as PDF for job applications, or as LaTeX to edit in Overleaf.</p>
+      <p>Download as PDF for applications, or as LaTeX to edit in Overleaf.</p>
     </div>
-    <div class="export-btns">
-      <a href="/export/pdf/{{ result_id }}" class="btn btn-primary">⬇ Download PDF</a>
-      <a href="/export/latex/{{ result_id }}" class="btn btn-latex">⬇ LaTeX for Overleaf</a>
-      <a href="/" class="btn btn-ghost">New Analysis</a>
+    <div class="eb-btns">
+      <a href="/export/pdf/{{ result_id }}" class="btn btn-white">⬇ Download PDF</a>
+      <a href="/export/latex/{{ result_id }}" class="btn btn-outline-w">⬇ LaTeX for Overleaf</a>
+      <a href="/" class="btn btn-outline-w">✦ New Analysis</a>
     </div>
   </div>
 
-</div><!-- /page -->
+</div><!-- /page-wrap -->
+
+<footer class="footer">Resumely · AI Resume Optimizer · No data sold · No tracking</footer>
 
 <script>
-// Copy helper
+const RESULT_ID = "{{ result_id }}";
+let pending = [];
+
+/* COPY */
 function copyEl(id, btn) {
   const el = document.getElementById(id);
   const text = el.tagName === 'PRE' ? el.textContent : el.innerText;
   navigator.clipboard.writeText(text).then(() => {
     const orig = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    btn.classList.add('copied');
+    btn.textContent = '✓ Copied!'; btn.classList.add('copied');
     setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2200);
   });
 }
 
-// Animate score ring
+/* ANIMATE ON LOAD */
 window.addEventListener('DOMContentLoaded', () => {
-  // Ring
-  const ring = document.getElementById('scoreRingFill');
+  // Score ring
+  const ring = document.getElementById('ringFill');
   if (ring) {
     const target = parseFloat(ring.dataset.target);
     setTimeout(() => {
       ring.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)';
       ring.style.strokeDashoffset = target;
-    }, 120);
-  }
-  // Bars
-  document.querySelectorAll('.bar-fill').forEach(bar => {
-    const w = bar.dataset.width;
-    setTimeout(() => {
-      bar.style.transition = 'width 1.2s cubic-bezier(.4,0,.2,1)';
-      bar.style.width = w + '%';
     }, 200);
+  }
+  // Score count-up
+  const final = {{ score }};
+  let cur = 0;
+  const el = document.getElementById('scoreNum');
+  const iv = setInterval(() => {
+    cur = Math.min(cur + Math.ceil(final / 28), final);
+    el.textContent = cur;
+    if (cur >= final) clearInterval(iv);
+  }, 40);
+  // Breakdown bars
+  document.querySelectorAll('.bd-fill').forEach(b => {
+    const w = b.dataset.w;
+    setTimeout(() => { b.style.transition = 'width 1.2s cubic-bezier(.4,0,.2,1)'; b.style.width = w + '%'; }, 350);
   });
 });
-</script>
 
+/* SKILL UPDATER */
+function toggleImplied(el, skill) {
+  const isOn = el.classList.contains('confirmed');
+  el.classList.toggle('unconfirmed', isOn);
+  el.classList.toggle('confirmed', !isOn);
+  el.textContent = isOn ? '+ ' + skill : '✓ ' + skill;
+  if (isOn) {
+    pending = pending.filter(s => s !== skill);
+  } else {
+    if (!pending.includes(skill)) pending.push(skill);
+    showMsg('Click "Update Score" to save your confirmed skills.', '#2563EB');
+  }
+}
+
+function addManual() {
+  const inp = document.getElementById('manualInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  if (!pending.includes(val)) {
+    pending.push(val);
+    const row = document.getElementById('confirmedRow');
+    row.insertAdjacentHTML('beforeend', `<span class="tag tag-green">${escH(val)}</span>`);
+    showMsg('"' + val + '" added — click Update Score to save.', '#2563EB');
+  }
+  inp.value = '';
+}
+
+async function saveUpdate() {
+  if (pending.length === 0) {
+    showMsg('No skills selected. Click implied skills above or type one.', '#D97706'); return;
+  }
+  const btn = document.getElementById('updateBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const r = await fetch('/update-skills/' + RESULT_ID, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skills: pending })
+    });
+    const d = await r.json();
+    if (d.success) {
+      document.getElementById('scoreTag').textContent = 'Score: ' + d.new_score;
+      document.getElementById('scoreNum').textContent = d.new_score;
+      // Animate ring to new value
+      const ring = document.getElementById('ringFill');
+      if (ring) {
+        const circ = 364.4;
+        const newOffset = circ - (circ * d.new_score / 100);
+        ring.style.transition = 'stroke-dashoffset 1s ease';
+        ring.style.strokeDashoffset = newOffset;
+      }
+      pending = [];
+      showMsg('✅ Score updated to ' + d.new_score + '! Skills saved.', '#16A34A');
+    } else {
+      showMsg('Update failed: ' + (d.error || 'Try again.'), '#DC2626');
+    }
+  } catch(e) {
+    showMsg('Network error. Please try again.', '#DC2626');
+  }
+  btn.disabled = false; btn.textContent = '↑ Update Score';
+}
+
+function showMsg(msg, color) {
+  const el = document.getElementById('updateMsg');
+  el.textContent = msg; el.style.color = color; el.style.display = 'block';
+}
+
+function escH(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
 </body>
 </html>
