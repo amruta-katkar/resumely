@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Resume Landing Page</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Custom CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+<body>
+
+
+
+<!-- ================= NAVBAR ================= -->
+
+<nav class="navbar navbar-expand-lg navbar-light custom-navbar sticky-top">
+  <div class="container">
+
+    <a class="navbar-brand fw-bold" href="#">
+      <span class="logo-box">R</span> Resumely
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+
+      <ul class="navbar-nav mx-auto gap-lg-4">
+        <li class="nav-item"><a class="nav-link" href="#">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">How It Works</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Pricing</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Resources</a></li>
+      </ul>
+
+      <div class="d-flex align-items-center gap-3">
+        <a href="/login" class="text-dark text-decoration-none">Log In</a>
+
+        <a href="/login" class="btn btn-primary-custom">
+          Get Started
+        </a>
+      </div>
+
+    </div>
+  </div>
+</nav>
+
+
+<div class="container py-5">
+  <div class="main-wrapper">
+    <!-- Hero Section -->
+    <section class="hero-section py-5">
+
+      <div class="row align-items-center">
+
+        <!-- Left -->
+        <div class="col-lg-6 mb-5 mb-lg-0">
+
+          <span class="badge-pill">
+            ✨ AI-Powered Resume Tailoring
+          </span>
+
+          <h1 class="hero-title mt-4">
+            Tailor Your Resume
+            for Every Job Using
+            <span>AI</span>
+          </h1>
+
+          <p class="hero-text mt-4">
+            Resumely analyzes job descriptions and customizes your resume
+            with the right skills, keywords, and achievements to help you
+            stand out and get hired faster.
+          </p>
+
+          <div class="d-flex flex-wrap gap-3 mt-4">
+            <a href="/login" class="btn btn-primary-custom px-4 py-3">
+              Get Started
+            </a>
+
+            <a href="#" class="btn btn-light-custom px-4 py-3">
+              Try Demo
+              <i class="bi bi-play-fill ms-1"></i>
+            </a>
+          </div>
+
+        </div>
+
+        <!-- Right -->
+        <div class="col-lg-6">
+
+          <div class="hero-visual position-relative">
+
+            <div class="floating-card score-card">
+              <small>ATS Score</small>
+              <h3>82%</h3>
+            </div>
+
+            <div class="resume-card">
+
+              <div class="profile-row">
+                <div class="avatar"></div>
+
+                <div>
+                  <div class="line short"></div>
+                  <div class="line tiny"></div>
+                </div>
+              </div>
+
+              <div class="resume-lines mt-4">
+                <div class="line"></div>
+                <div class="line"></div>
+                <div class="line"></div>
+                <div class="line medium"></div>
+              </div>
+
+            </div>
+
+            <div class="magnifier"></div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Features -->
+    <section class="features-section">
+
+      <div class="row g-4">
+
+        <div class="col-md-6 col-lg-3">
+          <div class="feature-card">
+
+            <div class="feature-icon">
+              <i class="bi bi-stars"></i>
+            </div>
+
+            <h5>ATS Optimization</h5>
+
+            <p>
+              Optimize your resume with industry-specific keywords
+              and pass ATS scans.
+            </p>
+
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="feature-card">
+
+            <div class="feature-icon">
+              <i class="bi bi-folder2-open"></i>
+            </div>
+
+            <h5>Smart Project Selection</h5>
+
+            <p>
+              AI selects the most relevant projects that match
+              job requirements.
+            </p>
+
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="feature-card">
+
+            <div class="feature-icon">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+
+            <h5>AI Cover Letters</h5>
+
+            <p>
+              Generate personalized cover letters that
+              highlight your strengths.
+            </p>
+
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="feature-card">
+
+            <div class="feature-icon">
+              <i class="bi bi-search"></i>
+            </div>
+
+            <h5>Resume Tailoring</h5>
+
+            <p>
+              Tailor your resume content to match
+              the job description perfectly.
+            </p>
+
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+  </div>
+</div>
+
+
+ 
+<!-- ================= FOOTER ================= -->
+
+<footer class="footer-section">
+
+  <div class="container">
+
+    <div class="row g-5">
+
+      <div class="col-lg-4">
+        <h5 class="fw-bold">Resumely</h5>
+
+        <p class="footer-text">
+          AI-powered resume tailoring platform
+          to help you land your dream job.
+        </p>
+      </div>
+
+      <div class="col-6 col-md-3 col-lg-2">
+        <h6>Product</h6>
+
+        <ul class="footer-links">
+          <li><a href="#">Features</a></li>
+          <li><a href="#">Pricing</a></li>
+          <li><a href="#">Roadmap</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-md-3 col-lg-2">
+        <h6>Resources</h6>
+
+        <ul class="footer-links">
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Guides</a></li>
+          <li><a href="#">Templates</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-md-3 col-lg-2">
+        <h6>Company</h6>
+
+        <ul class="footer-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Privacy</a></li>
+        </ul>
+      </div>
+
+      <!-- FIXED COLUMN -->
+      <div class="col-md-6 col-lg-2">
+
+        <h6>Stay Updated</h6>
+
+        <div class="subscribe-box">
+          <input type="email" placeholder="Enter your email">
+
+          <button>
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="copyright text-center">
+      © 2025 Resumely. All rights reserved.
+    </div>
+
+  </div>
+
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

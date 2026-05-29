@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getAuth,
+  signOut
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+  const firebaseConfig = {
+    apiKey: "{{ firebase_config.apiKey }}",
+    authDomain: "{{ firebase_config.authDomain }}",
+    projectId: "{{ firebase_config.projectId }}",
+    storageBucket: "{{ firebase_config.storageBucket }}",
+    messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+    appId: "{{ firebase_config.appId }}",
+    measurementId: "{{ firebase_config.measurementId }}"
+  };
+
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+
+logoutBtn.addEventListener("click", async () => {
+
+  try {
+
+    // FIREBASE LOGOUT
+
+    await signOut(auth);
+
+    // FLASK LOGOUT
+window.location.replace("/logout");
+
+  } catch(error){
+
+    alert(error.message);
+
+  }
+
+});
+
+</script>
+</head>
+<body>
+    <h1>Welcome {{ user }}</h1>
+    <button id="logoutBtn">
+  Logout
+</button>
+</body>
+</html>
