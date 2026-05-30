@@ -31,9 +31,6 @@ firebase_config = {
     "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID")
 }
 
-@auth_bp.route("/")
-def home():
-    return render_template("auth/index.html")
 
 @auth_bp.after_request
 def add_header(response):
@@ -48,18 +45,13 @@ def add_header(response):
     return response
 
 
-@auth_bp.route("/login")
-def login():
-
-    if "user" in session:
-        return redirect(url_for('auth.dashboard'))
-    
-    return render_template("auth/login.html", firebase_config=firebase_config)
 def login_required(f):
 
     @wraps(f)
 
     def decorated_function(*args, **kwargs):
+    
+        print("SESSION CHECK:", dict(session))
 
         if "user" not in session:
             return redirect(url_for('auth.login'))
@@ -67,15 +59,6 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
-
-@auth_bp.route("/signup")
-def signup():
-
-    if "user" in session:
-        return redirect(url_for('resume.dashboard'))
-
-    return render_template("auth/signup.html", firebase_config=firebase_config)
-
 
 @auth_bp.route("/create-session", methods=["POST"])
 def create_session():
@@ -98,26 +81,43 @@ def create_session():
 
         session["user"] = email
 
+        print("SESSION CREATED:", dict(session))
         return jsonify({
             "success": True
         })
 
     except Exception as e:
-
+        print("LOGIN ERROR:", e)
         return jsonify({
             "success": False,
             "message": str(e)
         }), 401
 
-@auth_bp.route("/dashboard")
-@login_required
-def dashboard():
-    flash("Login successful")
-    return render_template(
-    "resume/dashboard.html",
-    user=session["user"],
-    firebase_config=firebase_config
-)
+
+# ----------------------------------
+#           routes
+# ----------------------------------
+@auth_bp.route("/")
+def home():
+    return render_template("auth/index.html")
+
+
+@auth_bp.route("/login")
+def login():
+
+    if "user" in session:
+        return redirect(url_for('resume.dashboard'))
+    
+    return render_template("auth/login.html", firebase_config=firebase_config)
+
+
+@auth_bp.route("/signup")
+def signup():
+
+    if "user" in session:
+        return redirect(url_for('resume.dashboard'))
+
+    return render_template("auth/signup.html", firebase_config=firebase_config)
 
 
 @auth_bp.route("/logout")
@@ -125,4 +125,8 @@ def logout():
 
     session.clear()
     flash("Logged out successfully")
-    return redirect("/login")
+    response = redirect("/login")
+
+    response.delete_cookie("session")
+
+    return response

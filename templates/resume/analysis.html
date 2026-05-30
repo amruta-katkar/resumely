@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumely Dashboard</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/resumely.css') }}">
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/analysis.css') }}">
+
+</head>
+<body>
+<div class="layout">
+
+
+<!-- Sidebar -->
+<aside class="sidebar">
+
+    <div class="logo">
+        <h2>Resumely</h2>
+    </div>
+
+    <nav>
+        <a class="active" href="/dashboard">
+            Dashboard
+        </a>
+
+        <a href="/analysis">
+            New Analysis
+        </a>
+
+        <a href="#">
+            Saved Resumes
+        </a>
+
+        <a href="#">
+            ATS Reports
+        </a>
+
+        <a href="#">
+            Settings
+        </a>
+    </nav>
+
+    <div class="profile-card">
+
+        <div class="avatar">
+            {{ user[0]|upper }}
+        </div>
+
+        <div class="profile-info">
+            <strong>{{ user }}</strong>
+            <span>Free Plan</span>
+        </div>
+
+        <a id="logoutBtn" class="logout-btn">
+            Logout
+        </a>
+    </div>
+
+</aside>
+
+<!-- Main -->
+<main class="content">
+
+    <div class="analysis-page">
+
+    <div class="analysis-header">
+        <div>
+            <h1>Resume Analysis</h1>
+            <p>
+                Generate ATS-friendly resumes tailored to any job description.
+            </p>
+        </div>
+    </div>
+    <div id="alertBox"
+        class="alert-box">
+    </div>
+   <form action="/generate" method="POST" id="mainForm">
+
+        <input
+            type="hidden"
+            name="template_id"
+            id="templateInput"
+            value="classic">
+
+        <input
+            type="hidden"
+            name="extra_skills"
+            id="extraSkillsInput"
+            value="">
+        <!-- Job Description -->
+        <div class="analysis-card">
+            <div class="card-title">
+                Job Description
+            </div>
+
+            <textarea
+                id="jdArea"
+                name="job_description"
+                placeholder="Paste job description here...">
+            </textarea>
+        </div>
+<!-- resume pdf -->
+        <div class="analysis-card">
+
+        <div class="card-title">
+        Resume PDF
+        </div>
+
+        <input
+        type="file"
+        id="pdfInput"
+        accept=".pdf">
+
+        </div>
+        <!-- Skills + Template -->
+        <div class="analysis-row">
+
+            <div class="analysis-card">
+                <div class="card-title">Skills</div>
+
+                <textarea
+                    id="skillsArea"
+                    name="skills"
+                    placeholder="Python, Flask, SQL, React, Machine Learning..."
+                    oninput="updateCount(this,'skillsCount')"
+                    ></textarea>
+                    <div id="skillsCount" class="char-count">
+                    0 characters
+                    </div>
+            </div>
+
+            <div class="analysis-card">
+                <div class="card-title">Template</div>
+
+                <div class="template-grid">
+
+                    <div class="tpl-chip active"
+                        onclick="selectTpl('classic',this)">
+                        Classic
+                    </div>
+
+                    <div class="tpl-chip"
+                        onclick="selectTpl('tech',this)">
+                        Tech
+                    </div>
+
+                    <div class="tpl-chip"
+                        onclick="selectTpl('finance',this)">
+                        Finance
+                    </div>
+
+                    <div class="tpl-chip"
+                        onclick="selectTpl('government',this)">
+                        Government
+                    </div>
+
+                    <div class="tpl-chip"
+                        onclick="selectTpl('modern',this)">
+                        Modern
+                    </div>
+
+                    <div class="tpl-chip"
+                        onclick="selectTpl('minimal',this)">
+                        Minimal
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Projects + Experience -->
+        <div class="analysis-row">
+
+            <div class="analysis-card">
+                <div class="card-title">Projects</div>
+
+                <textarea
+                    id="projectsArea"
+                    name="projects"
+                    placeholder="Projects..."
+                    oninput="updateCount(this,'projectCount')">
+                </textarea>
+                <div id="projectCount" class="char-count">
+                0 characters
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <div class="card-title">Experience</div>
+
+                <textarea
+                    id="expArea"
+                    name="experience"
+                    placeholder="Experience..."
+                    oninput="updateCount(this,'experienceCount')">
+                </textarea>
+                <div id="experienceCount" class="char-count">
+                0 characters
+                </div>
+            </div>
+
+        </div>
+
+        <button type="submit" class="analyze-btn">
+            Analyze & Optimize Resume
+        </button>
+
+    </form>
+
+</div>
+
+</main>
+
+
+</div>
+<div class="loading-overlay"
+id="loadingOverlay">
+
+<div class="loading-card">
+
+<h2>
+Analyzing Your Resume
+</h2>
+
+<p>
+AI working through 5 steps...
+</p>
+
+<div class="step active" id="s1">
+Parsing resume structure
+</div>
+
+<div class="step" id="s2">
+Analyzing job description
+</div>
+
+<div class="step" id="s3">
+Calculating ATS score & gaps
+</div>
+
+<div class="step" id="s4">
+Tailoring bullet points
+</div>
+
+<div class="step" id="s5">
+Generating PDF & LaTeX
+</div>
+
+</div>
+
+</div>
+
+<script>
+function startLoading(){
+
+const steps=[
+"s1",
+"s2",
+"s3",
+"s4",
+"s5"
+];
+
+steps.forEach((id,index)=>{
+
+setTimeout(()=>{
+
+document
+.querySelectorAll('.step')
+.forEach(x=>x.classList.remove('active'));
+
+document
+.getElementById(id)
+.classList.add('active');
+
+},index*2000);
+
+});
+
+}
+
+function updateCount(el,id){
+
+document.getElementById(id).innerText =
+el.value.length + " characters";
+}
+
+document.getElementById('pdfInput')
+.addEventListener('change', async function(){
+
+const file=this.files[0];
+
+if(!file) return;
+
+const fd=new FormData();
+
+fd.append('resume_pdf',file);
+
+try{
+
+const res=await fetch('/parse-pdf',{
+method:'POST',
+body:fd
+});
+
+const data=await res.json();
+
+if(data.skills)
+document.getElementById('skillsArea').value=data.skills;
+
+if(data.projects)
+document.getElementById('projectsArea').value=data.projects;
+
+if(data.experience)
+document.getElementById('expArea').value=data.experience;
+
+}
+catch(err){
+
+alert('PDF parsing failed');
+
+}
+
+});
+
+document.getElementById("mainForm")
+.addEventListener("submit", function(e){
+
+    e.preventDefault();
+
+    document.getElementById("loadingOverlay")
+            .classList.add("active");
+
+    startLoading();
+
+    setTimeout(() => {
+        this.submit();
+    }, 100);
+
+});
+
+function selectTpl(id,el){
+
+document
+.querySelectorAll('.tpl-chip')
+.forEach(c=>c.classList.remove('active'));
+
+el.classList.add('active');
+
+document
+.getElementById('templateInput')
+.value=id;
+
+}
+</script>
+</body>
+</html>

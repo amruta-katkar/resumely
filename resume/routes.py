@@ -9,6 +9,7 @@ from functools import wraps
 from dotenv import load_dotenv
 from flask import Blueprint
 from flask import current_app
+from auth.routes import login_required
 
 resume_bp = Blueprint('resume', __name__)
 try:
@@ -64,12 +65,12 @@ def rate_limit(max_calls=5, window=60):
             return f(*args, **kwargs)
         return wrapper
     return dec
- 
+
 @resume_bp.before_request
 def ensure_session():
-    if "user_id" not in session:
-        session["user_id"] = str(uuid.uuid4())
 
+    if "user" in session:
+        session["user_id"] = session["user"]
 # ── DB ────────────────────────────────────────────────────────────
 def get_db():
     return psycopg2.connect(os.getenv("DATABASE_URL"), cursor_factory=psycopg2.extras.RealDictCursor)
@@ -479,6 +480,7 @@ def grammar_check():
     return jsonify({"issues": issues or []})
 
 @resume_bp.route("/generate", methods=["POST"])
+@login_required
 @rate_limit(5, 60)
 def generate():
     skills      = request.form.get("skills", "").strip()
@@ -489,6 +491,9 @@ def generate():
     extra_skills_raw = request.form.get("extra_skills", "")
     extra_skills = [s.strip() for s in extra_skills_raw.split(",") if s.strip()] if extra_skills_raw else []
 
+    print("FORM DATA:", request.form)
+    print("SKILLS:", repr(skills))
+    
     err = validate(skills=skills, projects=projects, experience=experience, job_description=job_desc)
     if err:
         return render_template("resume/error.html", message=err), 400
@@ -556,6 +561,7 @@ def generate():
 
 
 @resume_bp.route("/result/<result_id>")
+@login_required
 def result_page(result_id):
     result = None
     try:
@@ -618,6 +624,7 @@ def update_skills(result_id):
 
 
 @resume_bp.route("/export/pdf/<result_id>")
+@login_required
 def export_pdf(result_id):
     try:
         conn = get_db(); cur = conn.cursor()
@@ -639,6 +646,7 @@ def export_pdf(result_id):
 
 
 @resume_bp.route("/export/latex/<result_id>")
+@login_required
 def export_latex(result_id):
     try:
         conn = get_db(); cur = conn.cursor()
@@ -664,3 +672,75 @@ def e413(e): return render_template("resume/error.html", message="File too large
 def e500(e): logger.error(e); return render_template("resume/error.html", message="Server error. Try again."), 500
 
 
+@resume_bp.route("/dashboard")
+@login_required
+def dashboard():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            id,
+            ats_score,
+            job_category,
+            created_at
+        FROM resumes
+        WHERE session_id = %s
+        ORDER BY created_at DESC
+    """, (session["user"],))
+
+    resumes = cur.fetchall()
+
+    best_score = 0
+
+    if resumes:
+        best_score = max(
+            r["ats_score"] or 0
+            for r in resumes
+        )
+
+    dashboard_data = {
+        "total_resumes": len(resumes),
+        "best_score": best_score,
+        "last_analysis": resumes[0] if resumes else None
+    }
+
+    cur.close()
+    conn.close()
+
+    best_score = max(
+        [r["ats_score"] or 0 for r in resumes],
+        default=0
+    )
+
+    stats = {
+        "best_score": best_score,
+        "total_resumes": len(resumes),
+        "last_analysis": resumes[0] if resumes else None
+    }
+
+    return render_template(
+        "resume/dashboard.html",
+        user=session["user"],
+        resumes=resumes,
+        stats=stats,
+        firebase_config={
+            "apiKey": os.getenv("FIREBASE_API_KEY"),
+            "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+            "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+            "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+            "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+            "appId": os.getenv("FIREBASE_APP_ID"),
+            "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID")
+        }
+    )
+
+@resume_bp.route("/analysis")
+@login_required
+def analysis():
+
+    return render_template(
+        "resume/analysis.html",
+        user=session["user"]
+    )

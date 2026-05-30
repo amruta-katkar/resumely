@@ -27,7 +27,8 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getAuth,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  signOut
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -45,8 +46,7 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
-
-
+await signOut(auth);
 const form = document.getElementById("signupForm");
 
 form.addEventListener("submit", async (e) => {
