@@ -1,242 +1,58 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Results — Resumely</title>
-<meta name="robots" content="noindex,nofollow">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-<style>
-body { background: #F0F4FF; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumely Dashboard</title>
 
-/* NAVBAR */
-.navbar {
-  background: #fff; border-bottom: 1px solid #E2E8F0;
-  padding: 0 32px; height: 56px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 100;
-}
-.navbar-brand {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 17px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px;
-  text-decoration: none;
-}
-.brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); display: inline-block; }
-.nav-actions { display: flex; gap: 10px; align-items: center; }
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/resumely.css') }}">
+      <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/result.css') }}">
 
-/* BUTTONS */
-.btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
-  font-family: 'Inter', sans-serif; cursor: pointer; border: none;
-  text-decoration: none; transition: all 0.15s; white-space: nowrap;
-}
-.btn:hover { text-decoration: none; }
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-dark); }
-.btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary-mid); }
-.btn-outline:hover { background: var(--primary-light); }
-.btn-ghost { background: #fff; color: #64748B; border: 1.5px solid #E2E8F0; }
-.btn-ghost:hover { border-color: #CBD5E1; color: #334155; }
+    <script type="module">
 
-/* PAGE WRAP */
-.page-wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 80px; }
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-/* ATS HERO CARD */
-.ats-hero {
-  background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%);
-  border-radius: 16px; padding: 28px 32px; color: #fff;
-  display: flex; align-items: center; gap: 32px;
-  margin-bottom: 24px; box-shadow: 0 4px 20px rgba(37,99,235,0.3);
+import {
+  getAuth,
+  signOut
 }
-@media (max-width:680px) { .ats-hero { flex-direction: column; gap: 20px; padding: 20px; } }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* SCORE RING */
-.score-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
-.score-ring { position: relative; width: 120px; height: 120px; }
-.score-ring svg { transform: rotate(-90deg); display: block; }
-.ring-bg   { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 10; }
-.ring-fill { fill: none; stroke: #fff; stroke-width: 10; stroke-linecap: round; }
-.score-inner {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.score-num   { font-size: 32px; font-weight: 800; color: #fff; line-height: 1; }
-.score-label { font-size: 11px; color: rgba(255,255,255,.7); }
-.match-pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.28);
-  padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
-}
 
-.ats-right { flex: 1; min-width: 0; }
-.ats-role  { font-size: 19px; font-weight: 700; margin-bottom: 3px; }
-.ats-meta  { font-size: 12px; opacity: .8; margin-bottom: 16px; }
-.bd-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media(max-width:500px){ .bd-grid { grid-template-columns:1fr; } }
-.bd-label  { font-size: 11px; opacity: .75; margin-bottom: 5px; font-weight: 500; }
-.bd-track  { height: 5px; background: rgba(255,255,255,.2); border-radius: 3px; overflow: hidden; }
-.bd-fill   { height: 100%; border-radius: 3px; background: #fff; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
-.bd-score  { font-size: 11px; font-weight: 600; opacity: .9; margin-top: 3px; }
+  const firebaseConfig = {
+    apiKey: "{{ firebase_config.apiKey }}",
+    authDomain: "{{ firebase_config.authDomain }}",
+    projectId: "{{ firebase_config.projectId }}",
+    storageBucket: "{{ firebase_config.storageBucket }}",
+    messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+    appId: "{{ firebase_config.appId }}",
+    measurementId: "{{ firebase_config.measurementId }}"
+  };
 
-/* SECTION LAYOUT */
-.section-gap { margin-bottom: 20px; }
-.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media(max-width:700px) { .result-grid { grid-template-columns: 1fr; } }
-.full-col { grid-column: 1 / -1; }
 
-/* CARDS */
-.rcard {
-  background: #fff; border: 1px solid #E2E8F0;
-  border-radius: 14px; padding: 22px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.04);
-}
-.rcard-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #64748B; margin-bottom: 3px; }
-.rcard-title { font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 14px; }
+const app = initializeApp(firebaseConfig);
 
-/* TAGS */
-.tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 500;
-}
-.tag-green  { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
-.tag-red    { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
-.tag-yellow { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
-.tag-blue   { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
-.tag-gray   { background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; }
+const auth = getAuth(app);
 
-/* CLICKABLE TAG */
-.tag-btn {
-  cursor: pointer; transition: all .15s;
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 500;
-}
-.tag-btn:hover { transform: scale(1.04); }
-.tag-btn.unconfirmed { background: #F8FAFC; color: #64748B; border: 1.5px dashed #CBD5E1; }
-.tag-btn.confirmed  { background: #F0FDF4; color: #16A34A; border: 1.5px solid #86EFAC; }
 
-/* GAP SECTION */
-.gap-group { margin-bottom: 14px; }
-.gap-group:last-child { margin-bottom: 0; }
-.gap-group-title { font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 7px; }
+document.addEventListener("DOMContentLoaded", () => {
 
-/* SKILL UPDATER */
-.skill-updater-box {
-  background: #EFF6FF; border: 1px solid #BFDBFE;
-  border-radius: 10px; padding: 16px;
-}
-.updater-hint { font-size: 12px; color: #3B82F6; margin-bottom: 10px; font-weight: 500; }
-.manual-row { display: flex; gap: 8px; margin-top: 12px; }
-.manual-input {
-  flex: 1; border: 1.5px solid #BFDBFE; border-radius: 7px;
-  padding: 8px 12px; font-size: 13px; font-family: 'Inter', sans-serif;
-  background: #fff; color: #0F172A; outline: none;
-}
-.manual-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-.update-score-btn {
-  padding: 8px 18px; background: var(--primary); color: #fff;
-  border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
-  font-family: 'Inter', sans-serif; cursor: pointer; white-space: nowrap;
-  transition: all .15s;
-}
-.update-score-btn:hover { background: var(--primary-dark); }
-.update-score-btn:disabled { opacity: .6; pointer-events: none; }
-.update-msg { font-size: 12px; margin-top: 8px; font-weight: 500; display: none; }
+    const logoutBtn = document.getElementById("logoutBtn");
 
-/* RECS */
-.rec-list { display: flex; flex-direction: column; gap: 8px; }
-.rec-item {
-  display: flex; gap: 10px; align-items: flex-start;
-  padding: 10px 12px; border-radius: 8px;
-  background: #EFF6FF; border: 1px solid #BFDBFE;
-  font-size: 12.5px; color: #334155; line-height: 1.55;
-}
-.rec-icon { flex-shrink: 0; margin-top: 1px; }
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            window.location.href = "/logout";
+        });
+    }
 
-/* PROJECT / EXP */
-.project-card { border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px; margin-bottom: 10px; background: #F8FAFC; }
-.project-card:last-child { margin-bottom: 0; }
-.proj-name   { font-size: 13.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px; }
-.proj-reason { font-size: 12px; color: #64748B; font-style: italic; margin-bottom: 8px; }
-.proj-bullet { font-size: 12.5px; color: #334155; padding-left: 14px; position: relative; line-height: 1.5; margin-bottom: 3px; }
-.proj-bullet::before { content: '▸'; position: absolute; left: 0; color: var(--primary); font-size: 11px; top: 1px; }
-
-.exp-item { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid #F1F5F9; }
-.exp-item:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
-.exp-role   { font-size: 13.5px; font-weight: 700; color: #0F172A; }
-.exp-meta   { font-size: 11.5px; color: #64748B; margin: 2px 0 7px; }
-.exp-bullet { font-size: 12.5px; color: #334155; padding-left: 13px; position: relative; line-height: 1.5; margin-bottom: 3px; }
-.exp-bullet::before { content: '•'; position: absolute; left: 2px; color: var(--primary); }
-
-/* TEXT BLOCKS */
-.resume-pre {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 11.5px; line-height: 1.75; color: #334155;
-  white-space: pre-wrap; word-break: break-word;
-  background: #F8FAFC; border: 1px solid #E2E8F0;
-  border-radius: 8px; padding: 16px;
-  max-height: 360px; overflow-y: auto;
-}
-.cover-text {
-  font-size: 13.5px; line-height: 1.85; color: #334155;
-  white-space: pre-wrap; background: #F8FAFC;
-  border: 1px solid #E2E8F0; border-radius: 8px;
-  padding: 16px; max-height: 300px; overflow-y: auto;
-}
-.latex-pre {
-  font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.65;
-  color: #3B5280; background: #F0F4FF;
-  border: 1px solid #BFDBFE; border-radius: 8px;
-  padding: 16px; max-height: 260px; overflow: auto;
-}
-
-/* COPY BTN */
-.copy-btn {
-  margin-top: 10px; display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 14px; border-radius: 7px;
-  background: #fff; border: 1.5px solid #E2E8F0;
-  font-size: 12px; color: #64748B; font-weight: 500;
-  cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif;
-}
-.copy-btn:hover { border-color: var(--primary); color: var(--primary); background: #EFF6FF; }
-.copy-btn.copied { border-color: #16A34A; color: #16A34A; background: #F0FDF4; }
-
-/* TEMPLATE CHIPS (readonly) */
-.tpl-mini-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-.tpl-mini {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: 8px;
-  background: #F8FAFC; border: 1px solid #E2E8F0;
-  font-size: 12px; color: #64748B;
-}
-.tpl-mini.active-tpl {
-  background: #EFF6FF; border-color: var(--primary-mid); color: var(--primary); font-weight: 600;
-}
-
-/* EXPORT BAR */
-.export-bar {
-  background: linear-gradient(135deg, var(--primary) 0%, #1E40AF 100%);
-  border-radius: 14px; padding: 20px 28px; color: #fff;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 16px; margin-top: 24px;
-  box-shadow: 0 4px 16px rgba(37,99,235,.3);
-}
-.eb-text h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
-.eb-text p  { font-size: 12px; opacity: .8; }
-.eb-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-.btn-white   { background: #fff; color: var(--primary); font-weight: 700; border: none; }
-.btn-outline-w { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
-.btn-outline-w:hover { background: rgba(255,255,255,.25); }
-
-/* FOOTER */
-.footer { text-align: center; padding: 20px; color: #94A3B8; font-size: 12px; background: #fff; border-top: 1px solid #E2E8F0; margin-top: 40px; }
-</style>
+});
+</script>
 </head>
-<body>
-
+<body class="result-page">
 {% set ats   = result.get('ats_report', {}) %}
 {% set score = ats.get('total_score', 0) %}
 {% set bd    = ats.get('breakdown', {}) %}
@@ -245,67 +61,99 @@ body { background: #F0F4FF; }
 {% set tid   = result.get('template_id', 'classic') %}
 {% set circ  = 364.4 %}
 {% set doff  = circ - (circ * score / 100) %}
+<div class="layout">
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <a href="/" class="navbar-brand">Resumely<span class="brand-dot"></span></a>
-  <div class="nav-actions">
-    <a href="/export/pdf/{{ result_id }}" class="btn btn-primary">⬇ Download PDF</a>
-    <a href="/export/latex/{{ result_id }}" class="btn btn-outline">⬇ LaTeX</a>
-    <a href="/" class="btn btn-ghost">New Analysis</a>
-  </div>
-</nav>
 
+<!-- Sidebar -->
+<aside class="sidebar">
+
+    <div class="logo">
+        <h2>Resumely</h2>
+    </div>
+
+    <nav>
+        <a class="active" href="/dashboard">
+            Dashboard
+        </a>
+
+        <a href="/analysis">
+            New Analysis
+        </a>
+
+        <a href="#">
+            Saved Resumes
+        </a>
+
+        <a href="#">
+            ATS Reports
+        </a>
+
+        <a href="#">
+            Settings
+        </a>
+    </nav>
+
+    <div class="profile-card">
+
+        <div class="avatar">
+            {{ user[0]|upper }}
+        </div>
+
+        <div class="profile-info">
+            <strong>{{ user }}</strong>
+            <span>Free Plan</span>
+        </div>
+
+        <a id="logoutBtn" class="logout-btn">
+            Logout
+        </a>
+    </div>
+
+</aside>
+
+<!-- Main -->
+<main class="content">
 <div class="page-wrap">
 
   <!-- ── ATS SCORE HERO ────────────────────────────────── -->
-  <div class="ats-hero">
-    <div class="score-ring-wrap">
-      <div class="score-ring">
-        <svg viewBox="0 0 120 120" width="120" height="120">
-          <circle class="ring-bg" cx="60" cy="60" r="50"/>
-          <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="50"
-            stroke-dasharray="{{ circ }}" stroke-dashoffset="{{ circ }}"
-            data-target="{{ doff }}"/>
-        </svg>
-        <div class="score-inner">
-          <div class="score-num" id="scoreNum">0</div>
-          <div class="score-label">/ 100</div>
-        </div>
-      </div>
-      <div class="match-pill">
-        {% if score >= 75 %}✅ Strong Match
-        {% elif score >= 50 %}⚠ Moderate Match
-        {% else %}❌ Needs Work{% endif %}
-      </div>
+<div class="top-bar">
+
+    <div>
+        <h1>Resume Analysis</h1>
+        <p>
+            {{ jd.job_title }}
+        </p>
     </div>
 
-    <div class="ats-right">
-      <div class="ats-role">
-        {% if jd.get('job_title') %}{{ jd.job_title }}{% else %}Resume Analysis{% endif %}
-      </div>
-      <div class="ats-meta">
-        {% if jd.get('job_category') %}{{ jd.job_category }}{% endif %}
-        {% if jd.get('experience_level') %} · {{ jd.experience_level }}{% endif %}
-        {% if jd.get('industry') %} · {{ jd.industry }}{% endif %}
-      </div>
-      <div class="bd-grid">
-        {% for key, label in [
-          ('skill_match','Skill Match'),
-          ('keyword_coverage','Keyword Coverage'),
-          ('experience_alignment','Experience Align'),
-          ('section_completeness','Completeness')
-        ] %}
-        {% set v = bd.get(key, 0) %}
-        <div>
-          <div class="bd-label">{{ label }}</div>
-          <div class="bd-track"><div class="bd-fill" style="width:0%" data-w="{{ v }}"></div></div>
-          <div class="bd-score">{{ v }} / 100</div>
-        </div>
-        {% endfor %}
-      </div>
+    <a href="/analysis" class="primary-btn">
+        New Analysis
+    </a>
+
+</div>
+<div class="stats-grid">
+
+    <div class="stat-card">
+        <h4>ATS Score</h4>
+        <h2>{{ score }}%</h2>
     </div>
-  </div>
+
+    <div class="stat-card">
+        <h4>Skill Match</h4>
+        <h2>{{ bd.skill_match }}%</h2>
+    </div>
+
+    <div class="stat-card">
+        <h4>Keywords</h4>
+        <h2>{{ bd.keyword_coverage }}%</h2>
+    </div>
+
+    <div class="stat-card">
+        <h4>Experience</h4>
+        <h2>{{ bd.experience_alignment }}%</h2>
+    </div>
+
+</div>
+ </div>
 
   <!-- ── RESULTS GRID ───────────────────────────────────── -->
   <div class="result-grid">
@@ -316,8 +164,9 @@ body { background: #F0F4FF; }
       <div class="rcard-title">What's Missing vs What You Have</div>
 
       <div class="gap-group">
-        <div class="gap-group-title">✅ Matched Skills</div>
-        <div class="tags-row">
+        <span class="status success">
+        Strong Match
+        </span>        <div class="tags-row">
           {% for s in ats.get('matched_skills', [])[:12] %}
             <span class="tag tag-green">{{ s }}</span>
           {% else %}
@@ -327,7 +176,9 @@ body { background: #F0F4FF; }
       </div>
 
       <div class="gap-group">
-        <div class="gap-group-title">❌ Missing Skills</div>
+        <span class="status warning">
+Moderate Match
+</span>
         <div class="tags-row">
           {% for s in ats.get('missing_skills', [])[:12] %}
             <span class="tag tag-red">{{ s }}</span>
@@ -338,8 +189,9 @@ body { background: #F0F4FF; }
       </div>
 
       <div class="gap-group">
-        <div class="gap-group-title">🔑 Missing Keywords</div>
-        <div class="tags-row">
+<span class="status danger">
+Needs Improvement
+</span>        <div class="tags-row">
           {% for k in ats.get('missing_keywords', [])[:10] %}
             <span class="tag tag-yellow">{{ k }}</span>
           {% else %}
@@ -350,6 +202,7 @@ body { background: #F0F4FF; }
     </div>
 
     <!-- JD ANALYSIS -->
+     <div class="jd-section">
     <div class="rcard">
       <div class="rcard-label">JD Analysis</div>
       <div class="rcard-title">What They Want</div>
@@ -391,7 +244,7 @@ body { background: #F0F4FF; }
       <div style="font-size:13px;color:#94A3B8;">JD data unavailable.</div>
       {% endif %}
     </div>
-
+    </div>
     <!-- ── SKILL UPDATER ─────────────────────────────── -->
     <div class="rcard full-col" id="skillUpdaterSection">
       <div class="rcard-label">Skill Updater</div>
@@ -438,7 +291,7 @@ body { background: #F0F4FF; }
       <div class="rcard-title">Recommendations to Improve Your Score</div>
       <div class="rec-list">
         {% for rec in ats.recommendations %}
-        <div class="rec-item"><span class="rec-icon">💡</span><span>{{ rec }}</span></div>
+        <div class="rec-item"><span class="rec-icon"></span><span>{{ rec }}</span></div>
         {% endfor %}
       </div>
     </div>
@@ -482,7 +335,7 @@ body { background: #F0F4FF; }
       </div>
       {% if result.get('resume_text') %}
       <pre class="resume-pre" id="resumeText">{{ result.resume_text }}</pre>
-      <button class="copy-btn" onclick="copyEl('resumeText', this)">📋 Copy Resume</button>
+      <button class="copy-btn" onclick="copyEl('resumeText', this)">Copy Resume</button>
       {% else %}
       <div style="padding:14px;background:#FEF2F2;border-radius:8px;font-size:13px;color:#DC2626;">Resume text not generated — try again.</div>
       {% endif %}
@@ -494,7 +347,7 @@ body { background: #F0F4FF; }
       <div class="rcard-title">Tailored for This Role</div>
       {% if result.get('cover_letter') %}
       <div class="cover-text" id="coverText">{{ result.cover_letter }}</div>
-      <button class="copy-btn" onclick="copyEl('coverText', this)">📋 Copy Cover Letter</button>
+      <button class="copy-btn" onclick="copyEl('coverText', this)">Copy Cover Letter</button>
       {% else %}
       <div style="font-size:13px;color:#94A3B8;">Cover letter not available.</div>
       {% endif %}
@@ -509,7 +362,7 @@ body { background: #F0F4FF; }
           <div class="rcard-title" style="margin-bottom:0;">Jake's Template — Overleaf Ready</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="copy-btn" style="margin-top:0;" onclick="copyEl('latexPre', this)">📋 Copy LaTeX</button>
+          <button class="copy-btn" style="margin-top:0;" onclick="copyEl('latexPre', this)">Copy LaTeX</button>
           <a href="/export/latex/{{ result_id }}" class="btn btn-outline btn-ghost" style="font-size:12px;">⬇ .tex file</a>
         </div>
       </div>
@@ -517,7 +370,7 @@ body { background: #F0F4FF; }
     </div>
     {% endif %}
 
-    <!-- TEMPLATE INFO -->
+    <!-- TEMPLATE INFO
     {% if templates %}
     <div class="rcard full-col">
       <div class="rcard-label">All Templates</div>
@@ -535,7 +388,7 @@ body { background: #F0F4FF; }
         To use a different template, <a href="/" style="color:var(--primary);font-weight:600;">run a new analysis</a> and select it before submitting.
       </div>
     </div>
-    {% endif %}
+    {% endif %} -->
 
   </div><!-- /result-grid -->
 
@@ -546,15 +399,14 @@ body { background: #F0F4FF; }
       <p>Download as PDF for applications, or as LaTeX to edit in Overleaf.</p>
     </div>
     <div class="eb-btns">
-      <a href="/export/pdf/{{ result_id }}" class="btn btn-white">⬇ Download PDF</a>
-      <a href="/export/latex/{{ result_id }}" class="btn btn-outline-w">⬇ LaTeX for Overleaf</a>
-      <a href="/" class="btn btn-outline-w">✦ New Analysis</a>
+      <a href="/export/pdf/{{ result_id }}" class="primary-btn">Download PDF</a>
+      <a href="/export/latex/{{ result_id }}" class="secondary-btn">Export Latex</a>
     </div>
   </div>
+<footer class="footer">Resumely · AI Resume Optimizer · No data sold · No tracking</footer>
 
 </div><!-- /page-wrap -->
 
-<footer class="footer">Resumely · AI Resume Optimizer · No data sold · No tracking</footer>
 
 <script>
 const RESULT_ID = "{{ result_id }}";
@@ -583,7 +435,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 200);
   }
   // Score count-up
-  const final = {{ score }};
+  const final = { score };
   let cur = 0;
   const el = document.getElementById('scoreNum');
   const iv = setInterval(() => {
@@ -669,5 +521,12 @@ function escH(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
+    
+
+</main>
+
+
+</div>
+
 </body>
 </html>

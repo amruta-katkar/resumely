@@ -15,13 +15,18 @@ min-height:100vh;
 }
 
 .sidebar{
-width:260px;
-background:white;
-border-right:1px solid #e5e7eb;
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-padding:30px 20px;
+    position:fixed;
+    left:0;
+    top:0;
+    width:260px;
+    height:100vh;
+    overflow-y:auto;
+    background:white; 
+    border-right:1px solid #e5e7eb; 
+    display:flex; 
+    flex-direction:column; 
+    justify-content:space-between; 
+    padding:30px 20px; 
 }
 
 .logo h2{
@@ -89,8 +94,9 @@ border-radius:10px;
 }
 
 .content{
-flex:1;
-padding:40px;
+    flex:1;
+    margin-left:260px;
+    padding:40px;
 }
 
 .top-bar{

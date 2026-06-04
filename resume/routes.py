@@ -581,7 +581,16 @@ def result_page(result_id):
     if not result:
         return render_template("error.html", message="Result not found."), 404
     return render_template("resume/result.html", result=result, result_id=result_id,
-                           templates=TEMPLATES)
+                           templates=TEMPLATES,user=session["user"],
+        firebase_config={
+            "apiKey": os.getenv("FIREBASE_API_KEY"),
+            "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+            "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+            "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+            "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+            "appId": os.getenv("FIREBASE_APP_ID"),
+            "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID")
+        })
 
 
 @resume_bp.route("/update-skills/<result_id>", methods=["POST"])
@@ -742,5 +751,14 @@ def analysis():
 
     return render_template(
         "resume/analysis.html",
-        user=session["user"]
+        user=session["user"],
+        firebase_config={
+            "apiKey": os.getenv("FIREBASE_API_KEY"),
+            "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+            "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+            "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+            "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+            "appId": os.getenv("FIREBASE_APP_ID"),
+            "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID")
+        }
     )
