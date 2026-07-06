@@ -88,7 +88,7 @@
     margin-bottom:12px;
 }
 
-/* .tag-btn{
+.tag-btn{
     display:inline-flex;
     align-items:center;
     padding:8px 14px;
@@ -97,6 +97,7 @@
     font-size:12px;
     font-weight:600;
     transition:.2s;
+    border:none;
 }
 
 .tag-btn.unconfirmed{
@@ -107,7 +108,35 @@
 .tag-btn.confirmed{
     background:#dcfce7;
     color:#15803d;
-} */
+}
+
+.gap-group{
+    margin-bottom:16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.gap-group:last-child{
+    margin-bottom:0;
+}
+
+.score-ring svg{
+    transform:rotate(-90deg);
+    display:block;
+}
+
+.ring-bg{
+    fill:none;
+    stroke:#e2e8f0;
+    stroke-width:10;
+}
+
+.ring-fill{
+    fill:none;
+    stroke-width:10;
+    stroke-linecap:round;
+}
 
 .manual-row{
     display:flex;

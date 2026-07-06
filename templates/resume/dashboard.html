@@ -1,228 +1,111 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumely Dashboard</title>
-
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='css/resumely.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resumely.css') }}">
 
     <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getAuth,
-  signOut
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-
-  const firebaseConfig = {
-    apiKey: "{{ firebase_config.apiKey }}",
-    authDomain: "{{ firebase_config.authDomain }}",
-    projectId: "{{ firebase_config.projectId }}",
-    storageBucket: "{{ firebase_config.storageBucket }}",
-    messagingSenderId: "{{ firebase_config.messagingSenderId }}",
-    appId: "{{ firebase_config.appId }}",
-    measurementId: "{{ firebase_config.measurementId }}"
-  };
-
-
+const firebaseConfig = {
+  apiKey: "{{ firebase_config.apiKey }}",
+  authDomain: "{{ firebase_config.authDomain }}",
+  projectId: "{{ firebase_config.projectId }}",
+  storageBucket: "{{ firebase_config.storageBucket }}",
+  messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+  appId: "{{ firebase_config.appId }}",
+  measurementId: "{{ firebase_config.measurementId }}"
+};
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
 
-
 document.addEventListener("DOMContentLoaded", () => {
-
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            window.location.href = "/logout";
-        });
-    }
-
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      // Sign out of Firebase client-side *and* clear the Flask session —
+      // previously only the Flask session was cleared, so a stale Firebase
+      // client session could linger in the browser after "logout".
+      try { await signOut(auth); } catch (e) { /* ignore */ }
+      window.location.href = "/logout";
+    });
+  }
 });
 </script>
 </head>
 <body>
-
 <div class="layout">
 
-
-<!-- Sidebar -->
 <aside class="sidebar">
-
-    <div class="logo">
-        <h2>Resumely</h2>
-    </div>
-
+    <div class="logo"><h2>Resumely</h2></div>
     <nav>
-        <a class="active" href="/dashboard">
-            Dashboard
-        </a>
-
-        <a href="/analysis">
-            New Analysis
-        </a>
-
-        <a href="#">
-            Saved Resumes
-        </a>
-
-        <a href="#">
-            ATS Reports
-        </a>
-
-        <a href="#">
-            Settings
-        </a>
+        <a class="active" href="/dashboard">Dashboard</a>
+        <a href="/analysis">New Analysis</a>
+        <a href="#">Saved Resumes</a>
+        <a href="#">ATS Reports</a>
+        <a href="#">Settings</a>
     </nav>
-
     <div class="profile-card">
-
-        <div class="avatar">
-            {{ user[0]|upper }}
-        </div>
-
-        <div class="profile-info">
-            <strong>{{ user }}</strong>
-            <span>Free Plan</span>
-        </div>
-
-        <a id="logoutBtn" class="logout-btn">
-            Logout
-        </a>
+        <div class="avatar">{{ user[0]|upper }}</div>
+        <div class="profile-info"><strong>{{ user }}</strong><span>Free Plan</span></div>
+        <a id="logoutBtn" class="logout-btn" style="cursor:pointer;">Logout</a>
     </div>
-
 </aside>
 
-<!-- Main -->
 <main class="content">
 
     {% if resumes|length == 0 %}
-
     <div class="welcome-card">
-
         <h1>Welcome to Resumely</h1>
-
-        <p>
-            Analyze your first resume and receive ATS insights,
-            keyword matching, missing skills and tailored resume content.
-        </p>
-
-        <a href="/analysis" class="primary-btn">
-            Start First Analysis
-        </a>
-
+        <p>Analyze your first resume and receive ATS insights, keyword matching, missing skills and tailored resume content.</p>
+        <a href="/analysis" class="primary-btn">Start First Analysis</a>
     </div>
-
     {% else %}
-
     <div class="top-bar">
-
-        <div>
-            <h1>Dashboard</h1>
-            <p>Welcome back, {{ user }}</p>
-        </div>
-
-        <a href="/analysis" class="primary-btn">
-            + New Analysis
-        </a>
-
+        <div><h1>Dashboard</h1><p>Welcome back, {{ user }}</p></div>
+        <a href="/analysis" class="primary-btn">+ New Analysis</a>
     </div>
 
     <div class="stats-grid">
-
-        <div class="stat-card">
-            <h4>Best ATS Score</h4>
-            <h2>{{ stats.best_score }}%</h2>
-        </div>
-
-        <div class="stat-card">
-            <h4>Saved Resumes</h4>
-            <h2>{{ stats.total_resumes }}</h2>
-        </div>
-
+        <div class="stat-card"><h4>Best ATS Score</h4><h2>{{ stats.best_score }}%</h2></div>
+        <div class="stat-card"><h4>Saved Resumes</h4><h2>{{ stats.total_resumes }}</h2></div>
         <div class="stat-card">
             <h4>Last Analysis</h4>
-
             {% if stats.last_analysis %}
-                <h2>
-                    {{ stats.last_analysis.job_category }}
-                </h2>
+                <h2>{{ stats.last_analysis.job_category }}</h2>
             {% else %}
                 <h2>None</h2>
             {% endif %}
         </div>
-
-        <div class="stat-card">
-            <h4>Total Analyses</h4>
-            <h2>{{ resumes|length }}</h2>
-        </div>
-
+        <div class="stat-card"><h4>Total Analyses</h4><h2>{{ resumes|length }}</h2></div>
     </div>
 
     <div class="table-card">
-
         <h3>Saved Resumes</h3>
-
         <table>
-
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>ATS Score</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-
+            <thead><tr><th>Category</th><th>ATS Score</th><th>Date</th><th>Action</th></tr></thead>
             <tbody>
-
             {% for resume in resumes %}
-
                 <tr>
-
-                    <td>
-                        {{ resume.job_category }}
-                    </td>
-
-                    <td>
-                        {{ resume.ats_score }}%
-                    </td>
-
-                    <td>
-                        {{ resume.created_at.strftime('%d %b %Y') }}
-                    </td>
-
-                    <td>
-                        <a href="/result/{{ resume.id }}">
-                            View
-                        </a>
-                    </td>
-
+                    <td>{{ resume.job_category }}</td>
+                    <td>{{ resume.ats_score }}%</td>
+                    <td>{{ resume.created_at.strftime('%d %b %Y') }}</td>
+                    <td><a href="/result/{{ resume.id }}">View</a></td>
                 </tr>
-
             {% endfor %}
-
             </tbody>
-
         </table>
-
     </div>
-
     {% endif %}
 
+    <footer style="margin-top:48px;text-align:center;color:#94a3b8;font-size:12px;">
+        Resumely · AI Resume Optimizer · No data sold · No tracking · © {{ current_year }}
+    </footer>
+
 </main>
-
-
 </div>
-
 </body>
 </html>

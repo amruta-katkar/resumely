@@ -1,54 +1,35 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resumely Dashboard</title>
-
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='css/resumely.css') }}">
-      <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/result.css') }}">
-
+    <title>Resume Analysis — Resumely</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resumely.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
     <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getAuth,
-  signOut
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-
-  const firebaseConfig = {
-    apiKey: "{{ firebase_config.apiKey }}",
-    authDomain: "{{ firebase_config.authDomain }}",
-    projectId: "{{ firebase_config.projectId }}",
-    storageBucket: "{{ firebase_config.storageBucket }}",
-    messagingSenderId: "{{ firebase_config.messagingSenderId }}",
-    appId: "{{ firebase_config.appId }}",
-    measurementId: "{{ firebase_config.measurementId }}"
-  };
-
-
+const firebaseConfig = {
+  apiKey: "{{ firebase_config.apiKey }}",
+  authDomain: "{{ firebase_config.authDomain }}",
+  projectId: "{{ firebase_config.projectId }}",
+  storageBucket: "{{ firebase_config.storageBucket }}",
+  messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+  appId: "{{ firebase_config.appId }}",
+  measurementId: "{{ firebase_config.measurementId }}"
+};
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
 
-
 document.addEventListener("DOMContentLoaded", () => {
-
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            window.location.href = "/logout";
-        });
-    }
-
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try { await signOut(auth); } catch (e) {}
+      window.location.href = "/logout";
+    });
+  }
 });
 </script>
 </head>
@@ -63,99 +44,72 @@ document.addEventListener("DOMContentLoaded", () => {
 {% set doff  = circ - (circ * score / 100) %}
 <div class="layout">
 
-
-<!-- Sidebar -->
 <aside class="sidebar">
-
-    <div class="logo">
-        <h2>Resumely</h2>
-    </div>
-
+    <div class="logo"><h2>Resumely</h2></div>
     <nav>
-        <a class="active" href="/dashboard">
-            Dashboard
-        </a>
-
-        <a href="/analysis">
-            New Analysis
-        </a>
-
-        <a href="#">
-            Saved Resumes
-        </a>
-
-        <a href="#">
-            ATS Reports
-        </a>
-
-        <a href="#">
-            Settings
-        </a>
+        <a class="active" href="/dashboard">Dashboard</a>
+        <a href="/analysis">New Analysis</a>
+        <a href="#">Saved Resumes</a>
+        <a href="#">ATS Reports</a>
+        <a href="#">Settings</a>
     </nav>
-
     <div class="profile-card">
-
-        <div class="avatar">
-            {{ user[0]|upper }}
-        </div>
-
-        <div class="profile-info">
-            <strong>{{ user }}</strong>
-            <span>Free Plan</span>
-        </div>
-
-        <a id="logoutBtn" class="logout-btn">
-            Logout
-        </a>
+        <div class="avatar">{{ user[0]|upper }}</div>
+        <div class="profile-info"><strong>{{ user }}</strong><span>Free Plan</span></div>
+        <a id="logoutBtn" class="logout-btn" style="cursor:pointer;">Logout</a>
     </div>
-
 </aside>
 
-<!-- Main -->
 <main class="content">
 <div class="page-wrap">
 
-  <!-- ── ATS SCORE HERO ────────────────────────────────── -->
-<div class="top-bar">
+  <div class="top-bar">
+    <div><h1>Resume Analysis</h1><p>{{ jd.job_title }}</p></div>
+    <a href="/analysis" class="primary-btn">New Analysis</a>
+  </div>
 
-    <div>
-        <h1>Resume Analysis</h1>
-        <p>
-            {{ jd.job_title }}
-        </p>
+  <div class="stats-grid">
+    <div class="stat-card" style="display:flex;align-items:center;gap:18px;">
+      <div class="score-ring" style="width:80px;height:80px;">
+        <svg viewBox="0 0 130 130" width="80" height="80">
+          <circle class="ring-bg" cx="65" cy="65" r="58"></circle>
+          <circle class="ring-fill" id="ringFill" cx="65" cy="65" r="58"
+                  stroke="#4f46e5"
+                  stroke-dasharray="{{ circ }}" stroke-dashoffset="{{ circ }}"
+                  data-target="{{ doff }}"></circle>
+        </svg>
+      </div>
+      <div><h4>ATS Score</h4><h2 id="scoreNum">0</h2></div>
     </div>
+    <div class="stat-card"><h4>Skill Match</h4><h2>{{ bd.skill_match }}%</h2></div>
+    <div class="stat-card"><h4>Keywords</h4><h2>{{ bd.keyword_coverage }}%</h2></div>
+    <div class="stat-card"><h4>Experience</h4><h2>{{ bd.experience_alignment }}%</h2></div>
+  </div>
 
-    <a href="/analysis" class="primary-btn">
-        New Analysis
-    </a>
-
-</div>
-<div class="stats-grid">
-
-    <div class="stat-card">
-        <h4>ATS Score</h4>
-        <h2>{{ score }}%</h2>
+  <!-- CONTACT SUMMARY -->
+  {% if pr.name or pr.email or pr.phone %}
+  <div class="rcard" style="margin-bottom:24px;">
+    <div class="rcard-label">Contact</div>
+    <div class="tags-row">
+      {% if pr.name %}<span class="tag tag-blue">{{ pr.name }}</span>{% endif %}
+      {% if pr.email %}<span class="tag tag-gray">{{ pr.email }}</span>{% endif %}
+      {% if pr.phone %}<span class="tag tag-gray">{{ pr.phone }}</span>{% endif %}
+      {% if pr.location %}<span class="tag tag-gray">{{ pr.location }}</span>{% endif %}
+      {% if pr.linkedin %}<span class="tag tag-gray">LinkedIn</span>{% endif %}
+      {% if pr.github %}<span class="tag tag-gray">GitHub</span>{% endif %}
+      {% if pr.portfolio %}<span class="tag tag-gray">Portfolio</span>{% endif %}
     </div>
-
-    <div class="stat-card">
-        <h4>Skill Match</h4>
-        <h2>{{ bd.skill_match }}%</h2>
+    {% if pr.hobbies %}
+    <div style="margin-top:12px;">
+      <div class="rcard-label" style="margin-bottom:6px;">Hobbies &amp; Interests</div>
+      <div class="tags-row">
+        {% for h in pr.hobbies %}<span class="tag tag-yellow">{{ h }}</span>{% endfor %}
+      </div>
     </div>
+    {% endif %}
+  </div>
+  {% endif %}
 
-    <div class="stat-card">
-        <h4>Keywords</h4>
-        <h2>{{ bd.keyword_coverage }}%</h2>
-    </div>
-
-    <div class="stat-card">
-        <h4>Experience</h4>
-        <h2>{{ bd.experience_alignment }}%</h2>
-    </div>
-
-</div>
- </div>
-
-  <!-- ── RESULTS GRID ───────────────────────────────────── -->
   <div class="result-grid">
 
     <!-- GAP ANALYSIS -->
@@ -164,9 +118,8 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="rcard-title">What's Missing vs What You Have</div>
 
       <div class="gap-group">
-        <span class="status success">
-        Strong Match
-        </span>        <div class="tags-row">
+        <span class="status success">Matched Skills</span>
+        <div class="tags-row">
           {% for s in ats.get('matched_skills', [])[:12] %}
             <span class="tag tag-green">{{ s }}</span>
           {% else %}
@@ -176,9 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
 
       <div class="gap-group">
-        <span class="status warning">
-Moderate Match
-</span>
+        <span class="status warning">Missing Skills</span>
         <div class="tags-row">
           {% for s in ats.get('missing_skills', [])[:12] %}
             <span class="tag tag-red">{{ s }}</span>
@@ -189,9 +140,8 @@ Moderate Match
       </div>
 
       <div class="gap-group">
-<span class="status danger">
-Needs Improvement
-</span>        <div class="tags-row">
+        <span class="status danger">Missing Keywords</span>
+        <div class="tags-row">
           {% for k in ats.get('missing_keywords', [])[:10] %}
             <span class="tag tag-yellow">{{ k }}</span>
           {% else %}
@@ -202,11 +152,10 @@ Needs Improvement
     </div>
 
     <!-- JD ANALYSIS -->
-     <div class="jd-section">
+    <div class="jd-section">
     <div class="rcard">
       <div class="rcard-label">JD Analysis</div>
       <div class="rcard-title">What They Want</div>
-
       {% if jd %}
       <div style="display:flex;flex-direction:column;gap:14px;">
         {% if jd.get('job_title') %}
@@ -245,7 +194,8 @@ Needs Improvement
       {% endif %}
     </div>
     </div>
-    <!-- ── SKILL UPDATER ─────────────────────────────── -->
+
+    <!-- SKILL UPDATER -->
     <div class="rcard full-col" id="skillUpdaterSection">
       <div class="rcard-label">Skill Updater</div>
       <div class="rcard-title">Confirm skills you have → boost your ATS score</div>
@@ -253,14 +203,10 @@ Needs Improvement
       {% set implied = ats.get('you_have_but_not_listed', []) %}
       {% if implied %}
       <div class="skill-updater-box" style="margin-bottom:16px;">
-        <div class="updater-hint">
-          💡 AI found these skills implied by your projects/experience — but not listed. Click any you actually have:
-        </div>
+        <div class="updater-hint">💡 AI found these skills implied by your projects/experience — but not listed. Click any you actually have:</div>
         <div class="tags-row" id="impliedRow">
           {% for s in implied %}
-          <span class="tag-btn unconfirmed" onclick="toggleImplied(this, '{{ s }}')" data-skill="{{ s }}">
-            + {{ s }}
-          </span>
+          <span class="tag-btn unconfirmed" onclick="toggleImplied(this, '{{ s }}')" data-skill="{{ s }}">+ {{ s }}</span>
           {% endfor %}
         </div>
       </div>
@@ -276,15 +222,13 @@ Needs Improvement
       </div>
 
       <div class="manual-row">
-        <input type="text" class="manual-input" id="manualInput"
-          placeholder="Type a skill to add manually (e.g. Docker, SQL, Canva)…"
+        <input type="text" class="manual-input" id="manualInput" placeholder="Type a skill to add manually (e.g. Docker, SQL, Canva)…"
           onkeydown="if(event.key==='Enter'){event.preventDefault();addManual();}">
         <button class="update-score-btn" id="updateBtn" onclick="saveUpdate()">↑ Update Score</button>
       </div>
       <div class="update-msg" id="updateMsg"></div>
     </div>
 
-    <!-- RECOMMENDATIONS -->
     {% if ats.get('recommendations') %}
     <div class="rcard full-col">
       <div class="rcard-label">Action Items</div>
@@ -297,7 +241,6 @@ Needs Improvement
     </div>
     {% endif %}
 
-    <!-- SELECTED PROJECTS -->
     {% if result.get('selected_projects') %}
     <div class="rcard">
       <div class="rcard-label">Tailored Projects</div>
@@ -312,7 +255,6 @@ Needs Improvement
     </div>
     {% endif %}
 
-    <!-- TAILORED EXPERIENCE -->
     {% if result.get('tailored_experience') %}
     <div class="rcard">
       <div class="rcard-label">Tailored Experience</div>
@@ -327,7 +269,6 @@ Needs Improvement
     </div>
     {% endif %}
 
-    <!-- RESUME TEXT -->
     <div class="rcard">
       <div class="rcard-label">Optimized Resume</div>
       <div class="rcard-title">ATS-Safe Plain Text
@@ -341,7 +282,6 @@ Needs Improvement
       {% endif %}
     </div>
 
-    <!-- COVER LETTER -->
     <div class="rcard">
       <div class="rcard-label">Cover Letter</div>
       <div class="rcard-title">Tailored for This Role</div>
@@ -353,7 +293,6 @@ Needs Improvement
       {% endif %}
     </div>
 
-    <!-- LATEX -->
     {% if result.get('latex') %}
     <div class="rcard full-col">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
@@ -370,29 +309,8 @@ Needs Improvement
     </div>
     {% endif %}
 
-    <!-- TEMPLATE INFO
-    {% if templates %}
-    <div class="rcard full-col">
-      <div class="rcard-label">All Templates</div>
-      <div class="rcard-title">10 Role-Aware Templates Available</div>
-      <div class="tpl-mini-grid">
-        {% set tpl_icons = {'classic':'📄','tech':'💻','finance':'💹','government':'🏛','academic':'📚','executive':'👔','creative':'🎨','healthcare':'🏥','modern':'✨','minimal':'◽'} %}
-        {% for tid2, tdata in templates.items() %}
-        <div class="tpl-mini {% if tid2 == result.get('template_id') %}active-tpl{% endif %}">
-          {{ tpl_icons.get(tid2,'📄') }} {{ tdata.name }}
-          <span style="font-size:10px;color:#94A3B8;">({{ tdata.cat }})</span>
-        </div>
-        {% endfor %}
-      </div>
-      <div style="margin-top:12px;font-size:12px;color:#94A3B8;">
-        To use a different template, <a href="/" style="color:var(--primary);font-weight:600;">run a new analysis</a> and select it before submitting.
-      </div>
-    </div>
-    {% endif %} -->
-
   </div><!-- /result-grid -->
 
-  <!-- EXPORT BAR -->
   <div class="export-bar">
     <div class="eb-text">
       <h3>Your resume is ready</h3>
@@ -403,16 +321,16 @@ Needs Improvement
       <a href="/export/latex/{{ result_id }}" class="secondary-btn">Export Latex</a>
     </div>
   </div>
-<footer class="footer">Resumely · AI Resume Optimizer · No data sold · No tracking</footer>
+  <footer class="footer">Resumely · AI Resume Optimizer · No data sold · No tracking · © {{ current_year }}</footer>
 
 </div><!-- /page-wrap -->
 
-
 <script>
 const RESULT_ID = "{{ result_id }}";
+const CSRF_TOKEN = "{{ csrf_token }}";
+const FINAL_SCORE = {{ score }};
 let pending = [];
 
-/* COPY */
 function copyEl(id, btn) {
   const el = document.getElementById(id);
   const text = el.tagName === 'PRE' ? el.textContent : el.innerText;
@@ -423,9 +341,7 @@ function copyEl(id, btn) {
   });
 }
 
-/* ANIMATE ON LOAD */
 window.addEventListener('DOMContentLoaded', () => {
-  // Score ring
   const ring = document.getElementById('ringFill');
   if (ring) {
     const target = parseFloat(ring.dataset.target);
@@ -434,23 +350,22 @@ window.addEventListener('DOMContentLoaded', () => {
       ring.style.strokeDashoffset = target;
     }, 200);
   }
-  // Score count-up
-  const final = { score };
+  // Score count-up. The previous version wrote `const final = { score };`
+  // which builds a JS *object* (not the numeric score), so
+  // Math.ceil(final/28) was NaN and the counter never animated.
   let cur = 0;
   const el = document.getElementById('scoreNum');
   const iv = setInterval(() => {
-    cur = Math.min(cur + Math.ceil(final / 28), final);
+    cur = Math.min(cur + Math.max(1, Math.ceil(FINAL_SCORE / 28)), FINAL_SCORE);
     el.textContent = cur;
-    if (cur >= final) clearInterval(iv);
+    if (cur >= FINAL_SCORE) clearInterval(iv);
   }, 40);
-  // Breakdown bars
   document.querySelectorAll('.bd-fill').forEach(b => {
     const w = b.dataset.w;
     setTimeout(() => { b.style.transition = 'width 1.2s cubic-bezier(.4,0,.2,1)'; b.style.width = w + '%'; }, 350);
   });
 });
 
-/* SKILL UPDATER */
 function toggleImplied(el, skill) {
   const isOn = el.classList.contains('confirmed');
   el.classList.toggle('unconfirmed', isOn);
@@ -486,14 +401,13 @@ async function saveUpdate() {
   try {
     const r = await fetch('/update-skills/' + RESULT_ID, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF_TOKEN },
       body: JSON.stringify({ skills: pending })
     });
     const d = await r.json();
     if (d.success) {
       document.getElementById('scoreTag').textContent = 'Score: ' + d.new_score;
       document.getElementById('scoreNum').textContent = d.new_score;
-      // Animate ring to new value
       const ring = document.getElementById('ringFill');
       if (ring) {
         const circ = 364.4;
@@ -521,12 +435,8 @@ function escH(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
-    
 
 </main>
-
-
 </div>
-
 </body>
 </html>
