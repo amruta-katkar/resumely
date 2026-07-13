@@ -200,6 +200,7 @@ def generate():
         return render_template("resume/error.html", message=err), 500
 
     latex_builder = ext()["latex_builder"]
+    tpl_meta = ext()["templates"].get(template_id)
     result = {
         "parsed_resume": parsed_resume,
         "parsed_jd": parsed_jd,
@@ -210,7 +211,8 @@ def generate():
         "cover_letter": tailored.get("cover_letter", ""),
         "template_id": template_id,
         "latex": latex_builder.build(parsed_resume, tailored.get("tailored_experience"),
-                                      tailored.get("selected_projects")),
+                                      tailored.get("selected_projects"),
+                                      layout=tpl_meta["layout"], accent=tpl_meta["color"]),
     }
 
     result_id = str(uuid.uuid4())
@@ -311,13 +313,12 @@ def export_pdf(result_id):
         return render_template("resume/error.html", message="Unauthorized."), 403
 
     result = row["output_data"]
-    resume_text = result.get("resume_text", "")
     template_id = result.get("template_id", "classic")
     pr = result.get("parsed_resume") or {}
     name = pr.get("name", "resume")
     contact_line = " · ".join(v for v in [pr.get("phone"), pr.get("email"), pr.get("location")] if v)
 
-    buf, err = ext()["pdf_builder"].build(resume_text, template_id, contact_line)
+    buf, err = ext()["pdf_builder"].build(result, template_id, contact_line)
     if err:
         return render_template("resume/error.html", message=err), 500
     safe_name = "".join(c for c in name if c.isalnum() or c in " _-").strip().replace(" ", "_") or "resume"
@@ -358,6 +359,102 @@ def e500(e):
     return render_template("resume/error.html", message="Server error. Try again."), 500
 
 
+@resume_bp.route("/saved-resumes")
+@login_required
+def saved_resumes():
+    resumes = ext()["repo"].list_for_session(session["user_id"])
+    return render_template(
+        "resume/saved_resumes.html", user=session["user"], resumes=resumes,
+        firebase_config=firebase_ctx(), csrf_token=ext()["csrf"].generate_token(session),
+    )
+
+
+@resume_bp.route("/resume/<result_id>/delete", methods=["POST"])
+@login_required
+@csrf_required
+def delete_resume(result_id):
+    try:
+        uuid.UUID(result_id)
+    except ValueError:
+        return jsonify({"error": "Invalid id"}), 400
+    deleted = ext()["repo"].delete(result_id, session["user_id"])
+    if not deleted:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify({"success": True})
+
+
+@resume_bp.route("/ats-reports")
+@login_required
+def ats_reports():
+    rows = ext()["repo"].get_full_output_for_reports(session["user_id"])
+    summary = ext()["reports"].summarize(rows)
+    return render_template(
+        "resume/ats_reports.html", user=session["user"], summary=summary,
+        firebase_config=firebase_ctx(),
+    )
+
+
+@resume_bp.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    repo = ext()["repo"]
+    if request.method == "POST":
+        token = request.form.get("csrf_token")
+        if not ext()["csrf"].validate(session, token):
+            return render_template("resume/error.html", message="Invalid CSRF token."), 400
+        default_template = request.form.get("default_template", "classic")
+        if default_template not in ext()["templates"].all():
+            default_template = "classic"
+        email_notifications = request.form.get("email_notifications") == "on"
+        repo.save_settings(session["user_id"], default_template, email_notifications)
+
+    current = repo.get_settings(session["user_id"])
+    return render_template(
+        "resume/settings.html", user=session["user"], settings=current,
+        templates=ext()["templates"].all(), firebase_config=firebase_ctx(),
+        csrf_token=ext()["csrf"].generate_token(session),
+    )
+
+
+@resume_bp.route("/settings/delete-account", methods=["POST"])
+@login_required
+@rate_limit_json(3, 300)
+@csrf_required
+def delete_account():
+    """Permanently deletes the account: the Firebase Auth user, every
+    saved resume, and the settings row. Requires the person to type
+    DELETE to confirm — no accidental single-click destruction."""
+    payload = request.get_json(silent=True) or {}
+    if payload.get("confirm") != "DELETE":
+        return jsonify({"error": "Type DELETE to confirm."}), 400
+
+    uid = session.get("uid")
+    session_id = session.get("user_id")
+    repo = ext()["repo"]
+
+    # Delete the Firebase account FIRST. If this fails, we abort without
+    # having touched any app data — better to have a stray Firebase user
+    # than to have silently deleted someone's resumes while their login
+    # still works.
+    try:
+        ext()["firebase"].delete_user(uid)
+    except Exception as e:
+        logger.error("Firebase account deletion failed: %s", e)
+        return jsonify({"error": "Couldn't delete your account right now. Please try again."}), 500
+
+    try:
+        repo.delete_all_for_session(session_id)
+        repo.delete_settings(session_id)
+    except Exception as e:
+        # The Firebase account is already gone at this point — data
+        # cleanup failing here just means orphaned rows keyed to a
+        # session_id nobody can ever log in as again, not a security issue.
+        logger.error("Post-deletion data cleanup failed for %s: %s", session_id, e)
+
+    session.clear()
+    return jsonify({"success": True})
+
+
 @resume_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -377,7 +474,10 @@ def dashboard():
 @resume_bp.route("/analysis")
 @login_required
 def analysis():
+    settings = ext()["repo"].get_settings(session["user_id"])
     return render_template(
         "resume/analysis.html", user=session["user"], firebase_config=firebase_ctx(),
         csrf_token=ext()["csrf"].generate_token(session),
+        default_template=settings.get("default_template", "classic"),
+        templates=ext()["templates"].all(),
     )

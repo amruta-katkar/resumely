@@ -1,0 +1,28 @@
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "{{ firebase_config.apiKey }}",
+  authDomain: "{{ firebase_config.authDomain }}",
+  projectId: "{{ firebase_config.projectId }}",
+  storageBucket: "{{ firebase_config.storageBucket }}",
+  messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+  appId: "{{ firebase_config.appId }}",
+  measurementId: "{{ firebase_config.measurementId }}"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutBtns = document.querySelectorAll("#logoutBtn, .logout-trigger");
+  logoutBtns.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      // Sign out of Firebase client-side *and* clear the Flask session, so
+      // no stale client session survives a "logout".
+      try { await signOut(auth); } catch (e) {}
+      window.location.href = "/logout";
+    });
+  });
+});
+</script>

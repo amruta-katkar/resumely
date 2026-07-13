@@ -11,7 +11,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, signInWithEmailAndPassword, sendPasswordResetEmail,
-  GoogleAuthProvider, signInWithPopup, setPersistence,
+  sendEmailVerification, GoogleAuthProvider, signInWithPopup, setPersistence,
   browserLocalPersistence, browserSessionPersistence, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -40,6 +40,12 @@ async function sendToFlask(idToken, rememberMe) {
   return response.json();
 }
 
+let pendingVerificationUser = null;
+
+function showVerifyBox(show) {
+  document.getElementById("verifyBox").style.display = show ? "block" : "none";
+}
+
 const form = document.getElementById("loginForm");
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -47,23 +53,62 @@ form.addEventListener("submit", async (e) => {
   const password = document.getElementById("password").value;
   if (!email || !password) { alert("All fields required"); return; }
 
+  showVerifyBox(false);
+  pendingVerificationUser = null;
+
   const submitBtn = form.querySelector("button[type=submit]");
   submitBtn.disabled = true;
   try {
     const rememberMe = document.getElementById("rememberMe").checked;
     await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    const idToken = await cred.user.getIdToken();
+    await cred.user.reload();
+    const idToken = await cred.user.getIdToken(true);
     const data = await sendToFlask(idToken, rememberMe);
     if (data.success) {
       window.location.href = "/dashboard";
+    } else if (data.message && data.message.toLowerCase().includes("verify")) {
+      // Sign-in succeeded on the Firebase side (cred.user is valid) — it's
+      // only our own backend that's rejecting the session because
+      // email_verified is false. That means we can call
+      // sendEmailVerification(cred.user) directly without asking the
+      // person to log in again.
+      pendingVerificationUser = cred.user;
+      showVerifyBox(true);
     } else {
       alert(data.message || "Login failed.");
     }
   } catch (error) {
+    // Surface the real Firebase error code during setup/debugging instead
+    // of a generic message that hides why it actually failed.
+    console.error("Login error:", error.code, error.message);
     alert("Login failed. Check your email and password.");
   } finally {
     submitBtn.disabled = false;
+  }
+});
+
+document.getElementById("resendVerifyBtn").addEventListener("click", async () => {
+  if (!pendingVerificationUser) return;
+  const btn = document.getElementById("resendVerifyBtn");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+  try {
+    await sendEmailVerification(pendingVerificationUser);
+    document.getElementById("verifyMsg").textContent =
+      "Verification email sent — check your inbox (and spam folder).";
+  } catch (error) {
+    console.error("Resend verification error:", error.code, error.message);
+    if (error.code === "auth/too-many-requests") {
+      document.getElementById("verifyMsg").textContent =
+        "Too many attempts — please wait a few minutes before trying again.";
+    } else {
+      document.getElementById("verifyMsg").textContent =
+        "Couldn't send the email. Please try again shortly.";
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Resend verification email";
   }
 });
 
@@ -155,6 +200,12 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
               </div>
               <button type="submit" class="signin-btn">Sign In</button>
             </form>
+
+            <div id="verifyBox" style="display:none;margin-top:16px;padding:14px 16px;background:#fef9c3;border:1px solid #fde68a;border-radius:12px;font-size:13.5px;">
+              <div style="margin-bottom:8px;color:#92400e;">Your email isn't verified yet. Check your inbox for the verification link, or resend it below.</div>
+              <button type="button" id="resendVerifyBtn" style="border:none;background:#f59e0b;color:#fff;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;">Resend verification email</button>
+              <div id="verifyMsg" style="margin-top:8px;color:#92400e;"></div>
+            </div>
 
             <p class="signup-text">Don't have an account? <a href="/signup">Sign up</a></p>
             <p class="terms-text">By signing in, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</p>

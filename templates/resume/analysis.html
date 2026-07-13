@@ -6,51 +6,13 @@
     <title>New Analysis — Resumely</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/resumely.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
-    <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "{{ firebase_config.apiKey }}",
-  authDomain: "{{ firebase_config.authDomain }}",
-  projectId: "{{ firebase_config.projectId }}",
-  storageBucket: "{{ firebase_config.storageBucket }}",
-  messagingSenderId: "{{ firebase_config.messagingSenderId }}",
-  appId: "{{ firebase_config.appId }}",
-  measurementId: "{{ firebase_config.measurementId }}"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try { await signOut(auth); } catch (e) {}
-      window.location.href = "/logout";
-    });
-  }
-});
-</script>
+    {% include 'resume/_firebase_logout.html' %}
 </head>
 <body>
+{% set active_page = 'analysis' %}
 <div class="layout">
 
-<aside class="sidebar">
-    <div class="logo"><h2>Resumely</h2></div>
-    <nav>
-        <a href="/dashboard">Dashboard</a>
-        <a class="active" href="/analysis">New Analysis</a>
-        <a href="#">Saved Resumes</a>
-        <a href="#">ATS Reports</a>
-        <a href="#">Settings</a>
-    </nav>
-    <div class="profile-card">
-        <div class="avatar">{{ user[0]|upper }}</div>
-        <div class="profile-info"><strong>{{ user }}</strong><span>Free Plan</span></div>
-        <a id="logoutBtn" class="logout-btn" style="cursor:pointer;">Logout</a>
-    </div>
-</aside>
+{% include 'resume/_sidebar.html' %}
 
 <main class="content">
 <div class="analysis-page">
@@ -65,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <form action="/generate" method="POST" id="mainForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <input type="hidden" name="template_id" id="templateInput" value="classic">
+        <input type="hidden" name="template_id" id="templateInput" value="{{ default_template }}">
         <input type="hidden" name="extra_skills" id="extraSkillsInput" value="">
 
         <!-- Resume PDF (optional autofill) -->
@@ -114,12 +76,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="analysis-card">
                 <div class="card-title">Template</div>
                 <div class="template-grid">
-                    <div class="tpl-chip active" onclick="selectTpl('classic',this)">Classic</div>
-                    <div class="tpl-chip" onclick="selectTpl('tech',this)">Tech</div>
-                    <div class="tpl-chip" onclick="selectTpl('finance',this)">Finance</div>
-                    <div class="tpl-chip" onclick="selectTpl('government',this)">Government</div>
-                    <div class="tpl-chip" onclick="selectTpl('modern',this)">Modern</div>
-                    <div class="tpl-chip" onclick="selectTpl('minimal',this)">Minimal</div>
+                    {% for tid, meta in templates.items() %}
+                    <div class="tpl-chip {{ 'active' if tid == default_template }}" onclick="selectTpl('{{ tid }}',this)" title="{{ meta.desc }}">
+                        <div style="font-weight:600;">{{ meta.name }}</div>
+                        <div style="font-size:10px;color:#9ca3af;margin-top:2px;">{{ meta.source }}</div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -148,9 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <button type="submit" class="analyze-btn">Analyze &amp; Optimize Resume</button>
     </form>
 
-    <footer style="margin-top:32px;text-align:center;color:#94a3b8;font-size:12px;">
-        Resumely · AI Resume Optimizer · No data sold · No tracking · © {{ current_year }}
-    </footer>
+    {% include 'resume/_footer.html' %}
 
 </div>
 </main>
@@ -187,6 +147,13 @@ function showAlert(msg){
     const box = document.getElementById('alertBox');
     box.textContent = msg;
     box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function hideAlert(){
+    const box = document.getElementById('alertBox');
+    box.style.display = 'none';
+    box.textContent = '';
 }
 
 document.getElementById('pdfInput').addEventListener('change', async function(){
@@ -233,11 +200,81 @@ document.getElementById('pdfInput').addEventListener('change', async function(){
     }
 });
 
+const REQUIRED_FIELDS = [
+    { id: 'jdArea',      label: 'Job Description', min: 30 },
+    { id: 'skillsArea',  label: 'Skills',           min: 3  },
+    { id: 'projectsArea',label: 'Projects',         min: 10 },
+    { id: 'expArea',     label: 'Experience',       min: 10 },
+];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function clearFieldErrors(){
+    document.querySelectorAll('.field-invalid').forEach(el => el.classList.remove('field-invalid'));
+}
+
+function markInvalid(el){
+    el.classList.add('field-invalid');
+}
+
+function validateForm(){
+    clearFieldErrors();
+    hideAlert();
+
+    const problems = [];
+
+    REQUIRED_FIELDS.forEach(f => {
+        const el = document.getElementById(f.id);
+        const val = el.value.trim();
+        if (!val) {
+            problems.push(`${f.label} is required.`);
+            markInvalid(el);
+        } else if (val.length < f.min) {
+            problems.push(`${f.label} looks too short — add a bit more detail.`);
+            markInvalid(el);
+        }
+    });
+
+    const email = document.getElementById('emailInput');
+    if (email.value.trim() && !EMAIL_RE.test(email.value.trim())) {
+        problems.push('That email address doesn\'t look valid.');
+        markInvalid(email);
+    }
+
+    const custTitle = document.querySelector('[name="custom_section_title"]');
+    const custContent = document.querySelector('[name="custom_section_content"]');
+    if (custTitle.value.trim() && !custContent.value.trim()) {
+        problems.push('You added a custom section title but no content for it.');
+        markInvalid(custContent);
+    }
+    if (!custTitle.value.trim() && custContent.value.trim()) {
+        problems.push('Give your custom section a title.');
+        markInvalid(custTitle);
+    }
+
+    if (problems.length > 0) {
+        showAlert(problems[0] + (problems.length > 1 ? ` (+${problems.length - 1} more issue${problems.length > 2 ? 's' : ''} below)` : ''));
+        return false;
+    }
+    return true;
+}
+
 document.getElementById("mainForm").addEventListener("submit", function(e){
     e.preventDefault();
+    // Validate first — only show the loading overlay and actually submit
+    // once the form is genuinely ready. Previously the button went
+    // straight to the loading screen and a full server round trip for
+    // something as simple as a missing field, which also meant a reload
+    // that discarded everything you'd typed.
+    if (!validateForm()) return;
+
     document.getElementById("loadingOverlay").classList.add("active");
     startLoading();
     setTimeout(() => { this.submit(); }, 100);
+});
+
+// Clear the red-outline/error state as soon as the person starts fixing it.
+REQUIRED_FIELDS.forEach(f => {
+    document.getElementById(f.id).addEventListener('input', function(){ this.classList.remove('field-invalid'); });
 });
 
 function selectTpl(id,el){

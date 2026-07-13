@@ -18,6 +18,7 @@ class AuthService:
 
     def login_with_id_token(self, id_token, remember_me=False):
         decoded = self.firebase.verify_id_token(id_token)
+        print(decoded)
         email = decoded.get("email")
         uid = decoded.get("uid")
         if not email or not decoded.get("email_verified", True):

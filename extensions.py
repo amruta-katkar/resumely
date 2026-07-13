@@ -50,6 +50,16 @@ class Database:
                 )
                 """
             )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS user_settings (
+                    session_id TEXT PRIMARY KEY,
+                    default_template TEXT DEFAULT 'classic',
+                    email_notifications BOOLEAN DEFAULT TRUE,
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+                """
+            )
 
 
 class FirebaseService:
@@ -81,7 +91,22 @@ class FirebaseService:
             raise RuntimeError("Firebase Admin is not configured on this server.")
         # check_revoked=True forces a lookup against Firebase so a token
         # from an already-logged-out / disabled account is rejected.
-        return firebase_auth.verify_id_token(id_token, check_revoked=True)
+        # clock_skew_seconds tolerates small differences between this
+        # machine's clock and Google's servers (a few seconds of drift is
+        # common on dev machines and otherwise raises "Token used too
+        # early" / "Token used too late" for a perfectly valid token).
+        return firebase_auth.verify_id_token(id_token, check_revoked=True, clock_skew_seconds=10)
+
+    def delete_user(self, uid):
+        """Permanently deletes the Firebase Auth account. Called before
+        purging app data, so that if this fails (network issue, already
+        deleted, etc.) we abort without having destroyed the person's
+        resumes for nothing."""
+        if not self._enabled:
+            raise RuntimeError("Firebase Admin is not configured on this server.")
+        if not uid:
+            raise ValueError("Missing uid — cannot delete account.")
+        firebase_auth.delete_user(uid)
 
 
 class CSRFProtect:

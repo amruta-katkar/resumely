@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — Resumely</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resumely.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analysis.css') }}">
+    {% include 'resume/_firebase_logout.html' %}
+</head>
+<body>
+{% set active_page = 'settings' %}
+<div class="layout">
+
+{% include 'resume/_sidebar.html' %}
+
+<main class="content">
+<div class="analysis-page">
+
+    <div class="analysis-header">
+        <div><h1>Settings</h1><p>Your account and default preferences.</p></div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for m in messages %}<div class="alert-box" style="display:block;">{{ m }}</div>{% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="analysis-card">
+        <div class="card-title">Account</div>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div class="avatar" style="width:48px;height:48px;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;">{{ user[0]|upper }}</div>
+            <div>
+                <div style="font-weight:700;color:#111827;">{{ user }}</div>
+                <div style="font-size:12px;color:#6b7280;">Free Plan</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="/settings">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="analysis-card">
+            <div class="card-title">Default Resume Template</div>
+            <p style="font-size:12.5px;color:#6b7280;margin-bottom:14px;">
+                Used to pre-select a template every time you start a new analysis. You can always
+                change it per analysis.
+            </p>
+            <div class="template-grid">
+                {% for tid, meta in templates.items() %}
+                <label class="tpl-chip {{ 'active' if tid == settings.default_template }}" style="cursor:pointer;display:block;" title="{{ meta.desc }}">
+                    <input type="radio" name="default_template" value="{{ tid }}"
+                           {{ 'checked' if tid == settings.default_template }}
+                           style="margin-right:6px;" onchange="this.closest('.template-grid').querySelectorAll('.tpl-chip').forEach(c=>c.classList.remove('active'));this.closest('label').classList.add('active');">
+                    <span style="font-weight:600;">{{ meta.name }}</span>
+                    <div style="font-size:10px;color:#9ca3af;margin-top:2px;margin-left:24px;">{{ meta.source }}</div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="analysis-card">
+            <div class="card-title">Notifications</div>
+            <label style="display:flex;align-items:center;gap:10px;font-size:14px;color:#374151;cursor:pointer;">
+                <input type="checkbox" name="email_notifications" {{ 'checked' if settings.email_notifications }} style="width:18px;height:18px;">
+                Email me when a new analysis finishes
+            </label>
+        </div>
+
+        <button type="submit" class="analyze-btn" style="max-width:220px;">Save Settings</button>
+    </form>
+
+    <div class="analysis-card" style="margin-top:20px;border-color:#fecaca;">
+        <div class="card-title" style="color:#dc2626;">Danger Zone</div>
+        <p style="font-size:12.5px;color:#6b7280;margin-bottom:14px;">
+            Signing out clears this session on this device.
+        </p>
+        <a class="logout-trigger btn" style="cursor:pointer;background:#fee2e2;color:#dc2626;padding:10px 18px;border-radius:10px;font-weight:600;font-size:13px;display:inline-block;margin-bottom:24px;">
+            Log out of this device
+        </a>
+
+        <div style="border-top:1px solid #fecaca;padding-top:20px;">
+            <div style="font-weight:700;color:#dc2626;font-size:14px;margin-bottom:6px;">Delete Account Permanently</div>
+            <p style="font-size:12.5px;color:#6b7280;margin-bottom:14px;line-height:1.6;">
+                This deletes your login, every saved resume, and your settings — immediately and
+                permanently. There is no recovery. Type <strong>DELETE</strong> below to confirm.
+            </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <input type="text" id="deleteConfirmInput" placeholder="Type DELETE"
+                       oninput="document.getElementById('deleteAccountBtn').disabled = this.value !== 'DELETE';"
+                       style="padding:10px 14px;border:1px solid #fecaca;border-radius:10px;font-size:13px;width:160px;">
+                <button type="button" id="deleteAccountBtn" disabled onclick="deleteAccount()"
+                        style="background:#dc2626;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;opacity:.5;">
+                    Delete My Account
+                </button>
+            </div>
+            <div id="deleteMsg" style="margin-top:10px;font-size:12.5px;display:none;"></div>
+        </div>
+    </div>
+
+    {% include 'resume/_footer.html' %}
+
+</div>
+</main>
+</div>
+
+<script>
+document.getElementById('deleteAccountBtn').addEventListener('click', function(){
+    this.style.opacity = this.disabled ? '.5' : '1';
+});
+document.getElementById('deleteConfirmInput').addEventListener('input', function(){
+    document.getElementById('deleteAccountBtn').style.opacity = this.value === 'DELETE' ? '1' : '.5';
+});
+
+async function deleteAccount(){
+    if (!confirm('This permanently deletes your account and every saved resume. This cannot be undone. Continue?')) return;
+
+    const btn = document.getElementById('deleteAccountBtn');
+    const msg = document.getElementById('deleteMsg');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+
+    try {
+        const r = await fetch('/settings/delete-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '{{ csrf_token }}' },
+            body: JSON.stringify({ confirm: 'DELETE' })
+        });
+        const d = await r.json();
+        if (d.success) {
+            window.location.href = '/';
+        } else {
+            msg.textContent = d.error || 'Something went wrong.';
+            msg.style.color = '#dc2626';
+            msg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Delete My Account';
+        }
+    } catch (e) {
+        msg.textContent = 'Network error. Please try again.';
+        msg.style.color = '#dc2626';
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Delete My Account';
+    }
+}
+</script>
+</body>
+</html>

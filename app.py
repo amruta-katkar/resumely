@@ -12,7 +12,7 @@ from config import Config
 from extensions import Database, FirebaseService, CSRFProtect
 from resume.services import (
     GeminiClient, PdfTextExtractor, TemplateManager, PdfBuilder,
-    LatexBuilder, ResumeRepository, RateLimiter,
+    LatexBuilder, ResumeRepository, RateLimiter, ATSReportAggregator,
 )
 
 load_dotenv()
@@ -71,6 +71,7 @@ def create_app():
     app.extensions["latex_builder"] = LatexBuilder()
     app.extensions["rate_limiter"] = RateLimiter()
     app.extensions["csrf"] = CSRFProtect()
+    app.extensions["reports"] = ATSReportAggregator()
 
     # ── Blueprints ─────────────────────────────────────────────
     from auth.routes import auth_bp

@@ -10,8 +10,8 @@
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getAuth, createUserWithEmailAndPassword, GoogleAuthProvider,
-  signInWithPopup, signOut
+  getAuth, createUserWithEmailAndPassword, sendEmailVerification,
+  GoogleAuthProvider, signInWithPopup, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -48,10 +48,28 @@ form.addEventListener("submit", async (e) => {
   if (password !== confirmPassword) { alert("Passwords do not match"); return; }
 
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    alert("Account created — please sign in.");
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    try {
+      // await sendEmailVerification(cred.user);
+      // alert("Account created! We've sent a verification link to your email — please verify before signing in. (Check spam if it doesn't show up in a minute.)");
+      try {
+          await sendEmailVerification(cred.user);
+          console.log("Verification email sent successfully.");
+          alert("Verification email sent.");
+      } catch (e) {
+          console.error("Verification failed:", e.code, e.message);
+          alert(`Verification failed:\n${e.code}\n${e.message}`);
+      }
+    } catch (verifyError) {
+      // Don't let a verification-email failure look like account-creation
+      // failure — the account WAS created. Log the real reason so it's
+      // debuggable instead of silently disappearing.
+      console.error("sendEmailVerification failed:", verifyError.code, verifyError.message);
+      alert("Account created, but we couldn't send the verification email right now. You can request it again from the login page.");
+    }
     window.location.href = "/login";
   } catch (error) {
+    console.error("Signup error:", error.code, error.message);
     alert("Couldn't create the account. That email may already be in use.");
   }
 });

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Resumes — Resumely</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resumely.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
+    {% include 'resume/_firebase_logout.html' %}
+</head>
+<body>
+{% set active_page = 'saved' %}
+<div class="layout">
+
+{% include 'resume/_sidebar.html' %}
+
+<main class="content">
+
+    <div class="top-bar">
+        <div><h1>Saved Resumes</h1><p>Every analysis you've run, in one place.</p></div>
+        <a href="/analysis" class="primary-btn">+ New Analysis</a>
+    </div>
+
+    {% if resumes|length == 0 %}
+    <div class="welcome-card">
+        <h1>Nothing saved yet</h1>
+        <p>Run your first analysis and it'll show up here.</p>
+        <a href="/analysis" class="primary-btn">Start First Analysis</a>
+    </div>
+    {% else %}
+
+    <div class="table-card">
+        <div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="searchInput" placeholder="Search by category…"
+                   style="flex:1;min-width:200px;padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;"
+                   oninput="filterRows()">
+            <select id="sortSelect" onchange="sortRows()" style="padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;">
+                <option value="date_desc">Newest first</option>
+                <option value="date_asc">Oldest first</option>
+                <option value="score_desc">Highest score</option>
+                <option value="score_asc">Lowest score</option>
+            </select>
+        </div>
+
+        <table id="resumeTable">
+            <thead><tr><th>Category</th><th>ATS Score</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for resume in resumes %}
+                <tr data-category="{{ resume.job_category|lower }}" data-score="{{ resume.ats_score }}"
+                    data-date="{{ resume.created_at.isoformat() }}" id="row-{{ resume.id }}">
+                    <td>{{ resume.job_category }}</td>
+                    <td>{{ resume.ats_score }}%</td>
+                    <td>{{ resume.created_at.strftime('%d %b %Y') }}</td>
+                    <td style="display:flex;gap:14px;">
+                        <a href="/result/{{ resume.id }}">View</a>
+                        <a href="/export/pdf/{{ resume.id }}" style="color:#16a34a;">PDF</a>
+                        <a href="#" style="color:#dc2626;" onclick="deleteRow('{{ resume.id }}');return false;">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div id="emptyState" style="display:none;text-align:center;padding:30px;color:#94a3b8;font-size:13px;">
+            No resumes match your search.
+        </div>
+    </div>
+    {% endif %}
+
+    {% include 'resume/_footer.html' %}
+
+</main>
+</div>
+
+<script>
+const CSRF_TOKEN = "{{ csrf_token }}";
+
+function filterRows() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#resumeTable tbody tr');
+    let visible = 0;
+    rows.forEach(r => {
+        const match = r.dataset.category.includes(q);
+        r.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function sortRows() {
+    const mode = document.getElementById('sortSelect').value;
+    const tbody = document.querySelector('#resumeTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+        if (mode === 'date_desc') return new Date(b.dataset.date) - new Date(a.dataset.date);
+        if (mode === 'date_asc') return new Date(a.dataset.date) - new Date(b.dataset.date);
+        if (mode === 'score_desc') return b.dataset.score - a.dataset.score;
+        if (mode === 'score_asc') return a.dataset.score - b.dataset.score;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+}
+
+async function deleteRow(id) {
+    if (!confirm('Delete this saved resume? This can\'t be undone.')) return;
+    try {
+        const r = await fetch('/resume/' + id + '/delete', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': CSRF_TOKEN }
+        });
+        const d = await r.json();
+        if (d.success) {
+            document.getElementById('row-' + id).remove();
+        } else {
+            alert(d.error || 'Delete failed.');
+        }
+    } catch (e) {
+        alert('Network error. Please try again.');
+    }
+}
+</script>
+</body>
+</html>

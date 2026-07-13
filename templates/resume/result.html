@@ -272,8 +272,8 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="rcard">
       <div class="rcard-label">Optimized Resume</div>
       <div class="rcard-title">ATS-Safe Plain Text
-        <span style="background:#EFF6FF;color:var(--primary);font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;margin-left:8px;">{{ tid | title }} Template</span>
-      </div>
+      <span style="background:#EFF6FF;color:var(--primary);font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;margin-left:8px;">{{ tid | title }} — {{ templates.get(tid, {}).get('source', '') }}</span>      
+    </div>
       {% if result.get('resume_text') %}
       <pre class="resume-pre" id="resumeText">{{ result.resume_text }}</pre>
       <button class="copy-btn" onclick="copyEl('resumeText', this)">Copy Resume</button>

@@ -1,17 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Error — Resumely</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Something went wrong — Resumely</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/resumely.css') }}">
+<style>
+    .error-wrap{
+        min-height:100vh;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:24px;
+    }
+    .error-card{
+        background:white;
+        max-width:440px;
+        width:100%;
+        text-align:center;
+        padding:48px 40px;
+        border-radius:20px;
+        box-shadow:0 3px 12px rgba(0,0,0,.05);
+    }
+    .error-icon{
+        width:56px;
+        height:56px;
+        border-radius:50%;
+        background:#fee2e2;
+        color:#dc2626;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:26px;
+        font-weight:700;
+        margin:0 auto 20px;
+    }
+    .error-title{
+        font-size:19px;
+        font-weight:700;
+        color:#111827;
+        margin-bottom:10px;
+    }
+    .error-message{
+        font-size:13.5px;
+        color:#6b7280;
+        line-height:1.6;
+        margin-bottom:30px;
+    }
+    .error-actions{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+    }
+    .error-btn-secondary{
+        display:inline-block;
+        padding:12px 20px;
+        border-radius:10px;
+        text-decoration:none;
+        font-weight:600;
+        font-size:13.5px;
+        color:#4f46e5;
+        background:#eef2ff;
+    }
+</style>
 </head>
-<body style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
-<div class="card" style="max-width:460px;width:100%;text-align:center;padding:40px;">
-  <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
-  <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Something went wrong</div>
-  <div style="font-size:13px;color:var(--text-muted);margin-bottom:28px;line-height:1.6;">{{ message or "An unexpected error occurred. Please try again." }}</div>
-  <a href="/" class="btn btn-primary btn-full">← Back to Home</a>
+<body>
+<div class="error-wrap">
+  <div class="error-card">
+    <div class="error-icon">!</div>
+    <div class="error-title">Something went wrong</div>
+    <div class="error-message">{{ message or "An unexpected error occurred. Please try again." }}</div>
+    <div class="error-actions">
+      <!-- Goes back to the analysis form, not the marketing homepage —
+           this always fires from a context where you were already
+           logged in and mid-task, so sending you to the landing page
+           would just mean re-navigating past it. Note: the form you were
+           filling in doesn't survive this redirect (the browser has
+           genuinely loaded a new page), so double-check anything you'd
+           typed before submitting again. -->
+      <a href="/analysis" class="primary-btn">← Back to Analysis</a>
+      <a href="/dashboard" class="error-btn-secondary">Go to Dashboard</a>
+    </div>
+  </div>
 </div>
 </body>
 </html>

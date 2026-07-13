@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Reports — Resumely</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resumely.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/result.css') }}">
+    {% include 'resume/_firebase_logout.html' %}
+    <style>
+        .trend-chart{display:flex;align-items:flex-end;gap:8px;height:160px;padding:10px 4px 0;}
+        .trend-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+        .trend-bar{width:100%;max-width:34px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#6366f1,#4f46e5);transition:height .6s ease;}
+        .trend-label{font-size:10px;color:#94a3b8;margin-top:6px;white-space:nowrap;}
+        .trend-score{font-size:11px;font-weight:700;color:#4f46e5;margin-bottom:4px;}
+        .cat-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+        .cat-name{width:120px;font-size:13px;color:#334155;font-weight:600;flex-shrink:0;}
+        .cat-track{flex:1;height:10px;background:#eef2ff;border-radius:999px;overflow:hidden;}
+        .cat-fill{height:100%;background:#4f46e5;border-radius:999px;}
+        .cat-count{width:28px;text-align:right;font-size:12px;color:#64748b;}
+    </style>
+</head>
+<body>
+{% set active_page = 'reports' %}
+<div class="layout">
+
+{% include 'resume/_sidebar.html' %}
+
+<main class="content">
+
+    <div class="top-bar">
+        <div><h1>ATS Reports</h1><p>How your resumes are scoring across every analysis you've run.</p></div>
+        <a href="/analysis" class="primary-btn">+ New Analysis</a>
+    </div>
+
+    {% if summary.count == 0 %}
+    <div class="welcome-card">
+        <h1>No data yet</h1>
+        <p>Run an analysis to start building your ATS report.</p>
+        <a href="/analysis" class="primary-btn">Start First Analysis</a>
+    </div>
+    {% else %}
+
+    <div class="stats-grid">
+        <div class="stat-card"><h4>Average Score</h4><h2>{{ summary.average_score }}%</h2></div>
+        <div class="stat-card"><h4>Best Score</h4><h2>{{ summary.best_score }}%</h2></div>
+        <div class="stat-card"><h4>Latest Score</h4><h2>{{ summary.latest_score }}%</h2></div>
+        <div class="stat-card"><h4>Total Analyses</h4><h2>{{ summary.count }}</h2></div>
+    </div>
+
+    <div class="result-grid">
+
+        <div class="rcard full-col">
+            <div class="rcard-label">Trend</div>
+            <div class="rcard-title">Score Over Your Last {{ summary.trend|length }} Analyses</div>
+            <div class="trend-chart">
+                {% for point in summary.trend %}
+                <div class="trend-bar-wrap">
+                    <div class="trend-score">{{ point.score }}</div>
+                    <div class="trend-bar" style="height:{{ point.score }}%;"></div>
+                    <div class="trend-label">{{ point.date }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="rcard">
+            <div class="rcard-label">Breakdown</div>
+            <div class="rcard-title">Analyses by Job Category</div>
+            {% for c in summary.by_category %}
+            <div class="cat-row">
+                <div class="cat-name">{{ c.category }}</div>
+                <div class="cat-track"><div class="cat-fill" style="width:{{ (c.count / summary.count * 100)|round }}%;"></div></div>
+                <div class="cat-count">{{ c.count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="rcard">
+            <div class="rcard-label">Recurring Gaps</div>
+            <div class="rcard-title">Skills Most Often Flagged as Missing</div>
+            {% if summary.top_missing_skills %}
+            <div class="tags-row">
+                {% for s in summary.top_missing_skills %}
+                <span class="tag tag-red">{{ s.skill }} × {{ s.count }}</span>
+                {% endfor %}
+            </div>
+            <p style="margin-top:14px;font-size:12.5px;color:#64748b;">
+                These keep showing up as gaps across your analyses — worth adding a project or line of experience that demonstrates them.
+            </p>
+            {% else %}
+            <p style="font-size:13px;color:#94a3b8;">No recurring gaps — nice work.</p>
+            {% endif %}
+        </div>
+
+    </div>
+    {% endif %}
+
+    {% include 'resume/_footer.html' %}
+
+</main>
+</div>
+</body>
+</html>
